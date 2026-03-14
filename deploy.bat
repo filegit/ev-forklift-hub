@@ -1,0 +1,23 @@
+@echo off
+echo 🚀 开始部署...
+
+echo 📥 拉取最新代码...
+git pull origin main
+
+echo 🛑 停止旧服务...
+docker-compose down
+
+echo 🔨 构建并启动服务...
+docker-compose up -d --build
+
+echo ⏳ 等待服务启动...
+timeout /t 30
+
+echo ✅ 检查服务状态...
+docker-compose ps
+
+echo 📋 查看日志...
+docker-compose logs --tail=20
+
+echo 🎉 部署完成！
+pause

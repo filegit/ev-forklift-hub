@@ -1,0 +1,30 @@
+# 多阶段构建 - 网关服务
+FROM maven:3.8-openjdk-17 AS build
+
+WORKDIR /build
+
+# 复制父 pom
+COPY pom.xml .
+
+# 复制公共模块
+COPY efh-common ./efh-common
+
+# 复制网关模块
+COPY efh-gateway ./efh-gateway
+
+# 构建项目
+RUN mvn clean package -DskipTests -pl efh-gateway -am
+
+# 运行阶段
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# 复制 jar 包
+COPY --from=build /build/efh-gateway/target/*.jar app.jar
+
+# 暴露端口
+EXPOSE 8080
+
+# 启动应用
+ENTRYPOINT ["java", "-jar", "app.jar"]

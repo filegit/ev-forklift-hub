@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "EV-Forklift-Hub API 测试集合",
+    "description": "新能源叉车社区平台 API 测试集合",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "用户服务",
+      "item": [
+        {
+          "name": "1. 用户注册",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 自动保存 Token",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.token) {",
+                  "        pm.environment.set('token', jsonData.data.token);",
+                  "        console.log('Token 已保存:', jsonData.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser007\",\n  \"password\": \"123456\",\n  \"nickname\": \"测试用户007\",\n  \"phone\": \"13800138007\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/api/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "api", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. 用户登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 自动保存 Token",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.token) {",
+                  "        pm.environment.set('token', jsonData.data.token);",
+                  "        console.log('Token 已保存:', jsonData.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser007\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/api/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "api", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. 获取用户信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/api/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "api", "info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. 测试接口",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/api/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "api", "test"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "社区服务",
+      "item": [
+        {
+          "name": "1. 发布帖子",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"新能源叉车电池保养技巧\",\n  \"content\": \"大家好，今天分享一下新能源叉车电池的日常保养技巧...\",\n  \"category\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. 帖子列表（全部）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post/list?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. 帖子列表（技术交流）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post/list?page=1&size=10&category=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "category",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. 帖子详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. 点赞帖子",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post/1/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post", "1", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. 测试接口",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/community/api/post/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["community", "api", "post", "test"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

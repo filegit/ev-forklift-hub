@@ -1,0 +1,29 @@
+package com.efh.community.repository;
+
+import com.efh.community.document.PostDocument;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ * 帖子ES仓库
+ */
+@Repository
+public interface PostEsRepository extends ElasticsearchRepository<PostDocument, Long> {
+
+    /**
+     * 根据标题搜索
+     */
+    List<PostDocument> findByTitleContaining(String title);
+
+    /**
+     * 根据内容搜索
+     */
+    List<PostDocument> findByContentContaining(String content);
+
+    /**
+     * 根据分类查询
+     */
+    List<PostDocument> findByCategory(String category);
+}

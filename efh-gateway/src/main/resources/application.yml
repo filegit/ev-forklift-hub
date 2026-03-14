@@ -1,0 +1,93 @@
+# API 网关配置文件
+# 端口: 8080
+# 功能: 统一入口、路由转发、认证鉴权、限流、跨域
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: efh-gateway
+  
+  # 排除不需要的自动配置
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      
+      routes:
+        - id: efh-user
+          uri: lb://efh-user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        - id: efh-community
+          uri: lb://efh-community
+          predicates:
+            - Path=/community/**
+          filters:
+            - StripPrefix=1
+
+        - id: efh-parts
+          uri: lb://efh-parts
+          predicates:
+            - Path=/parts/**
+          filters:
+            - StripPrefix=1
+
+        - id: efh-service
+          uri: lb://efh-service
+          predicates:
+            - Path=/service/**
+          filters:
+            - StripPrefix=1
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: 6379
+    password: ${REDIS_PASSWORD:123456}
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+
+logging:
+  level:
+    com.efh: debug
+    org.springframework.cloud.gateway: debug
+    org.springframework.cloud.loadbalancer: debug

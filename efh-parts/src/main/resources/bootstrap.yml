@@ -1,0 +1,31 @@
+# Spring Cloud Bootstrap 配置文件
+
+spring:
+  application:
+    name: efh-parts
+  cloud:
+    nacos:
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: 80fe315a-7634-4d77-b7d3-703a2a24d7a0
+        file-extension: yml
+        group: DEFAULT_GROUP
+        username: nacos                                     # Nacos默认用户名
+        password: nacos                                     # Nacos默认密码
+        enabled: true
+        refresh-enabled: true
+        timeout: 10000
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: 80fe315a-7634-4d77-b7d3-703a2a24d7a0
+        group: DEFAULT_GROUP
+        username: nacos                                     # Nacos默认用户名
+        password: nacos                                     # Nacos默认密码
+        enabled: true
+        register-enabled: true
+        heart-beat-interval: 5000
+        heart-beat-timeout: 15000
+        watch:
+          enabled: true
+        naming-load-cache-at-start: true
+        fail-fast: false

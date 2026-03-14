@@ -1,0 +1,72 @@
+# 配件服务配置文件
+# 端口: 8083
+# 功能: 配件管理、配件订单
+
+server:
+  port: 8083
+
+spring:
+  application:
+    name: efh-parts
+  
+  # 排除 Elasticsearch 自动配置
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+  
+  shardingsphere:
+    datasource:
+      names: ds0
+      ds0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_parts?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+        username: root
+        password: ${MYSQL_PASSWORD:123456}
+    rules:
+      sharding:
+        tables:
+          parts_order:
+            actual-data-nodes: ds0.parts_order_$->{0..3}
+            table-strategy:
+              standard:
+                sharding-column: id
+                sharding-algorithm-name: order-inline
+        sharding-algorithms:
+          order-inline:
+            type: INLINE
+            props:
+              algorithm-expression: parts_order_$->{id % 4}
+    props:
+      sql-show: true
+  
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: 6379
+    password: ${REDIS_PASSWORD:123456}
+    database: 2
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:127.0.0.1:9092}
+    consumer:
+      group-id: efh-parts-group
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+redisson:
+  address: redis://${REDIS_HOST:127.0.0.1}:6379
+  password: ${REDIS_PASSWORD:123456}
+  database: 2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.efh: debug

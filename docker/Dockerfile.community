@@ -1,0 +1,30 @@
+# 多阶段构建 - 社区服务
+FROM maven:3.8-openjdk-17 AS build
+
+WORKDIR /build
+
+# 复制父 pom
+COPY pom.xml .
+
+# 复制公共模块
+COPY efh-common ./efh-common
+
+# 复制社区服务模块
+COPY efh-community ./efh-community
+
+# 构建项目
+RUN mvn clean package -DskipTests -pl efh-community -am
+
+# 运行阶段
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# 复制 jar 包
+COPY --from=build /build/efh-community/target/*.jar app.jar
+
+# 暴露端口
+EXPOSE 8082
+
+# 启动应用
+ENTRYPOINT ["java", "-jar", "app.jar"]
