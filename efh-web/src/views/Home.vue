@@ -1,7 +1,37 @@
 <template>
-  <div class="home">
-    <!-- 分类筛选 -->
-    <el-card class="filter-card">
+  <div class="home efh-page">
+    <section class="workbench">
+      <div>
+        <span class="efh-kicker">EV FORKLIFT OPERATIONS</span>
+        <h1>新能源叉车业务协同中台</h1>
+        <p>把运营社区、备件采购、维保工单、知识库和 AI 助手串成一条车企售后业务链路。</p>
+      </div>
+      <div class="quick-actions">
+        <el-button type="primary" @click="$router.push('/parts')">备件采购</el-button>
+        <el-button @click="$router.push('/service')">创建维保工单</el-button>
+      </div>
+    </section>
+
+    <div class="efh-metric-grid efh-section">
+      <div class="efh-metric">
+        <label>业务闭环</label>
+        <strong>下单-支付-物流</strong>
+      </div>
+      <div class="efh-metric">
+        <label>核心场景</label>
+        <strong>车企售后</strong>
+      </div>
+      <div class="efh-metric">
+        <label>AI 能力</label>
+        <strong>故障问答</strong>
+      </div>
+      <div class="efh-metric">
+        <label>知识沉淀</label>
+        <strong>维修案例</strong>
+      </div>
+    </div>
+
+    <el-card class="filter-card efh-section">
       <el-radio-group v-model="currentCategory" @change="handleCategoryChange">
         <el-radio-button :label="0">全部</el-radio-button>
         <el-radio-button :label="1">技术交流</el-radio-button>
@@ -11,18 +41,17 @@
       </el-radio-group>
     </el-card>
     
-    <!-- 帖子列表 -->
-    <el-card class="post-list" v-loading="loading">
-      <div class="post-item" v-for="post in postList" :key="post.id" @click="goToDetail(post.id)">
+    <el-card class="post-list efh-section" v-loading="loading">
+      <div class="efh-post-item" v-for="post in postList" :key="post.id" @click="goToDetail(post.id)">
         <div class="post-header">
-          <h3 class="post-title">{{ post.title }}</h3>
-          <el-tag :type="getCategoryType(post.category)">
+          <h3 class="efh-post-title">{{ post.title }}</h3>
+          <el-tag :type="getCategoryType(post.category)" size="small" effect="light">
             {{ getCategoryName(post.category) }}
           </el-tag>
         </div>
-        <div class="post-content">{{ post.content }}</div>
-        <div class="post-footer">
-          <div class="post-stats">
+        <div class="efh-post-content">{{ post.content }}</div>
+        <div class="efh-post-meta">
+          <div class="efh-post-stats">
             <span><el-icon><View /></el-icon> {{ post.viewCount }}</span>
             <span><el-icon><ChatDotRound /></el-icon> {{ post.commentCount }}</span>
             <span><el-icon><Star /></el-icon> {{ post.likeCount }}</span>
@@ -34,8 +63,7 @@
       <el-empty v-if="!loading && postList.length === 0" description="暂无帖子" />
     </el-card>
     
-    <!-- 分页 -->
-    <div class="pagination">
+    <div class="efh-pagination">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -52,6 +80,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getPostList } from '@/api/post'
 import { ElMessage } from 'element-plus'
+import { View, ChatDotRound, Star } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -73,8 +102,8 @@ const fetchPostList = async () => {
     }
     
     const res = await getPostList(params)
-    postList.value = res.data.records
-    total.value = res.data.total
+    postList.value = res.data.records || []
+    total.value = res.data.total || 0
   } catch (error) {
     ElMessage.error('获取帖子列表失败')
   } finally {
@@ -112,119 +141,72 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  max-width: 900px;
-  margin: 0 auto;
-  width: 100%;
+  max-width: var(--efh-max-width);
 }
 
-.filter-card {
-  margin-bottom: 20px;
+.workbench {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--efh-border-light);
+  background: linear-gradient(135deg, #ffffff 0%, #edf8f5 100%);
+}
+
+.workbench h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.workbench p {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: var(--efh-text-secondary);
+}
+
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .filter-card :deep(.el-card__body) {
-  padding: 12px;
+  padding: 14px 16px;
 }
 
-.post-list {
-  min-height: 400px;
-}
-
-.post-item {
-  padding: 20px;
-  border-bottom: 1px solid #ebeef5;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.post-item:hover {
-  background: #f5f7fa;
-}
-
-.post-item:last-child {
-  border-bottom: none;
+.post-list :deep(.el-card__body) {
+  padding: 0;
 }
 
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
-.post-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0;
-}
-
-.post-content {
-  color: #606266;
-  line-height: 1.6;
-  margin-bottom: 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.post-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #909399;
-  font-size: 14px;
-}
-
-.post-stats {
-  display: flex;
-  gap: 20px;
-}
-
-.post-stats span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
+.post-time {
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
-  .filter-card {
-    margin-bottom: 12px;
+  .workbench {
+    flex-direction: column;
   }
 
-  .filter-card :deep(.el-radio-group) {
-    margin-top: 8px;
-  }
-
-  .post-item {
-    padding: 14px 12px;
+  .workbench h1 {
+    font-size: 23px;
   }
 
   .post-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-  }
-
-  .post-title {
-    font-size: 16px;
-  }
-
-  .post-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .post-stats {
-    gap: 12px;
   }
 }
 </style>

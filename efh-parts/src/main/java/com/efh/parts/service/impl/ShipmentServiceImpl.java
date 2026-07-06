@@ -1,15 +1,15 @@
 package com.efh.parts.service.impl;
 
-import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.efh.common.exception.BusinessException;
 import com.efh.parts.entity.PartsOrder;
 import com.efh.parts.entity.PartsShipment;
 import com.efh.parts.entity.PartsShipmentTrace;
 import com.efh.parts.mapper.PartsShipmentMapper;
+import com.efh.parts.mapper.PartsShipmentTraceMapper;
 import com.efh.parts.service.PartsOrderService;
 import com.efh.parts.service.ShipmentService;
-import com.efh.parts.mapper.PartsShipmentTraceMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -30,23 +30,29 @@ public class ShipmentServiceImpl extends ServiceImpl<PartsShipmentMapper, PartsS
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void shipOrder(Long orderId) {
+    public PartsShipment shipOrder(Long operatorId, Long orderId, String carrier, String trackingNo, String firstLocation) {
         PartsOrder order = partsOrderService.getById(orderId);
-        if (order == null || order.getStatus() != 1) {
-            return;
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        if (!canOperateShipment(operatorId, order)) {
+            throw new BusinessException("无权发货该订单");
+        }
+        if (order.getStatus() != 1) {
+            throw new BusinessException("当前订单不是待发货状态");
+        }
+        if (isBlank(carrier) || isBlank(trackingNo)) {
+            throw new BusinessException("请填写承运商和运单号");
+        }
+        if (getByOrderId(orderId) != null) {
+            throw new BusinessException("该订单已发货");
         }
 
-        PartsShipment existing = getByOrderId(orderId);
-        if (existing != null) {
-            return;
-        }
-
-        String trackingNo = "SF" + RandomUtil.randomNumbers(12);
         PartsShipment shipment = new PartsShipment();
         shipment.setOrderId(orderId);
         shipment.setOrderNo(order.getOrderNo());
-        shipment.setCarrier("顺丰速运");
-        shipment.setTrackingNo(trackingNo);
+        shipment.setCarrier(carrier.trim());
+        shipment.setTrackingNo(trackingNo.trim());
         shipment.setStatus(1);
         shipment.setShipTime(LocalDateTime.now());
         save(shipment);
@@ -55,10 +61,9 @@ public class ShipmentServiceImpl extends ServiceImpl<PartsShipmentMapper, PartsS
         order.setShipTime(LocalDateTime.now());
         partsOrderService.updateById(order);
 
-        LocalDateTime now = LocalDateTime.now();
-        saveTrace(shipment.getId(), now.minusHours(2), "上海", "快件已从【上海仓库】发出");
-        saveTrace(shipment.getId(), now.minusHours(1), "上海转运中心", "快件到达【上海转运中心】");
-        saveTrace(shipment.getId(), now, order.getReceiverAddress(), "快件正在派送中，请保持电话畅通");
+        saveTrace(shipment.getId(), LocalDateTime.now(), defaultLocation(firstLocation, "备件仓库"),
+                carrier.trim() + "已揽收，运单号：" + trackingNo.trim());
+        return shipment;
     }
 
     @Override
@@ -76,6 +81,30 @@ public class ShipmentServiceImpl extends ServiceImpl<PartsShipmentMapper, PartsS
                 .orderByDesc(PartsShipmentTrace::getTraceTime));
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void appendTrace(Long operatorId, Long orderId, String location, String description) {
+        PartsOrder order = partsOrderService.getById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        if (!canOperateShipment(operatorId, order)) {
+            throw new BusinessException("无权更新该订单物流");
+        }
+        if (order.getStatus() != 2) {
+            throw new BusinessException("当前订单不是运输中状态");
+        }
+        PartsShipment shipment = getByOrderId(orderId);
+        if (shipment == null) {
+            throw new BusinessException("请先录入发货信息");
+        }
+        if (isBlank(description)) {
+            throw new BusinessException("请填写物流轨迹说明");
+        }
+        saveTrace(shipment.getId(), LocalDateTime.now(), defaultLocation(location, "物流节点"), description.trim());
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void markReceived(Long orderId) {
         PartsShipment shipment = getByOrderId(orderId);
@@ -83,7 +112,7 @@ public class ShipmentServiceImpl extends ServiceImpl<PartsShipmentMapper, PartsS
             shipment.setStatus(3);
             shipment.setReceiveTime(LocalDateTime.now());
             updateById(shipment);
-            saveTrace(shipment.getId(), LocalDateTime.now(), "已签收", "快件已签收，感谢使用顺丰速运");
+            saveTrace(shipment.getId(), LocalDateTime.now(), "已签收", "货物已签收，订单履约完成");
         }
     }
 
@@ -94,5 +123,17 @@ public class ShipmentServiceImpl extends ServiceImpl<PartsShipmentMapper, PartsS
         trace.setLocation(location);
         trace.setDescription(desc);
         traceMapper.insert(trace);
+    }
+
+    private String defaultLocation(String location, String fallback) {
+        return isBlank(location) ? fallback : location.trim();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private boolean canOperateShipment(Long operatorId, PartsOrder order) {
+        return order.getSellerId().equals(operatorId) || Long.valueOf(1L).equals(operatorId);
     }
 }

@@ -8,11 +8,13 @@ import java.util.List;
 
 public interface ShipmentService extends IService<PartsShipment> {
 
-    void shipOrder(Long orderId);
+    PartsShipment shipOrder(Long operatorId, Long orderId, String carrier, String trackingNo, String firstLocation);
 
     PartsShipment getByOrderId(Long orderId);
 
     List<PartsShipmentTrace> listTraces(Long shipmentId);
+
+    void appendTrace(Long operatorId, Long orderId, String location, String description);
 
     void markReceived(Long orderId);
 }

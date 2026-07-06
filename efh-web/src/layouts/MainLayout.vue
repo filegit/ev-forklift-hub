@@ -4,7 +4,7 @@
       <div class="header-content">
         <div class="logo" @click="$router.push('/')">
           <el-icon :size="22"><Van /></el-icon>
-          <span class="logo-text">叉车社区</span>
+          <span class="logo-text">电叉协同平台</span>
         </div>
 
         <!-- 桌面端导航 -->
@@ -15,11 +15,11 @@
           router
           @select="handleMenuSelect"
         >
-          <el-menu-item index="/">首页</el-menu-item>
-          <el-menu-item index="/parts">配件商城</el-menu-item>
+          <el-menu-item index="/">运营社区</el-menu-item>
+          <el-menu-item index="/parts">备件采购</el-menu-item>
           <el-menu-item index="/knowledge">知识库</el-menu-item>
           <el-menu-item index="/assistant">AI助手</el-menu-item>
-          <el-menu-item index="/service">维修服务</el-menu-item>
+          <el-menu-item index="/service">维保工单</el-menu-item>
         </el-menu>
 
         <!-- 桌面端操作区 -->
@@ -27,7 +27,7 @@
           <el-badge :value="cartCount" :hidden="!cartCount" :max="99" class="cart-badge">
             <el-button @click="$router.push('/cart')" v-if="userStore.token">
               <el-icon><ShoppingCart /></el-icon>
-              购物车
+              采购车
             </el-button>
           </el-badge>
           <el-button type="primary" @click="showPostDialog = true" v-if="userStore.token">
@@ -68,12 +68,12 @@
       </div>
     </el-header>
 
-    <el-main class="main-content">
+    <el-main class="main-content" :class="{ 'no-tabbar-padding': hideTabBar && isMobile }">
       <router-view />
     </el-main>
 
-    <!-- 移动端底部导航（CSS 控制显隐） -->
-    <nav class="mobile-tabbar mobile-only">
+    <!-- 移动端底部导航（结算/支付页隐藏） -->
+    <nav v-if="!hideTabBar" class="mobile-tabbar mobile-only">
       <button
         v-for="tab in tabItems"
         :key="tab.path"
@@ -103,11 +103,11 @@
       </div>
 
       <el-menu :default-active="activeMenu" router @select="onDrawerSelect">
-        <el-menu-item index="/">首页</el-menu-item>
-        <el-menu-item index="/parts">配件商城</el-menu-item>
+        <el-menu-item index="/">运营社区</el-menu-item>
+        <el-menu-item index="/parts">备件采购</el-menu-item>
         <el-menu-item index="/knowledge">知识库</el-menu-item>
         <el-menu-item index="/assistant">AI 助手</el-menu-item>
-        <el-menu-item index="/service">维修服务</el-menu-item>
+        <el-menu-item index="/service">维保工单</el-menu-item>
         <el-menu-item v-if="userStore.token" index="/orders">我的订单</el-menu-item>
         <el-menu-item v-if="userStore.token" index="/collections">我的收藏</el-menu-item>
         <el-menu-item v-if="userStore.token" index="/profile">个人中心</el-menu-item>
@@ -184,6 +184,11 @@ const { isMobile } = useMobile()
 
 const dialogWidth = computed(() => (isMobile.value ? '92%' : '600px'))
 
+const hideTabBar = computed(() => {
+  const p = route.path
+  return p.startsWith('/checkout') || p.startsWith('/pay')
+})
+
 const drawerOpen = ref(false)
 const activeMenu = computed(() => {
   if (route.path.startsWith('/parts') || route.path.startsWith('/cart') || route.path.startsWith('/checkout') || route.path.startsWith('/orders')) return '/parts'
@@ -196,7 +201,7 @@ const activeMenu = computed(() => {
 
 const tabItems = [
   { path: '/', label: '首页', icon: House },
-  { path: '/parts', label: '商城', icon: ShoppingBag },
+  { path: '/parts', label: '备件', icon: ShoppingBag },
   { path: '/knowledge', label: '知识库', icon: Reading },
   { path: '/assistant', label: 'AI', icon: ChatDotRound },
   { path: '/profile', label: '我的', icon: User }
@@ -282,51 +287,72 @@ onMounted(loadCartCount)
 <style scoped>
 .main-layout {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: var(--efh-bg);
   width: 100%;
 }
 
 .header {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--efh-border-light);
+  box-shadow: var(--efh-shadow-sm);
   padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 900;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: var(--efh-max-width);
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
-  gap: 8px;
+  height: var(--efh-header-height);
+  padding: 0 20px;
+  gap: 12px;
   width: 100%;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #409eff;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--efh-text);
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;
+  letter-spacing: 0;
+}
+
+.logo .el-icon {
+  color: var(--efh-primary);
 }
 
 .nav-menu {
   flex: 1;
   border: none;
-  margin: 0 24px;
+  margin: 0 16px;
   min-width: 0;
+  background: transparent !important;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  font-weight: 500;
+  border-bottom: 2px solid transparent !important;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  color: var(--efh-primary) !important;
+  border-bottom-color: var(--efh-primary) !important;
+  background: transparent !important;
 }
 
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -335,38 +361,47 @@ onMounted(loadCartCount)
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.user-info:hover {
+  background: var(--efh-primary-soft);
 }
 
 .username {
   font-size: 14px;
-  color: #606266;
+  color: var(--efh-text-secondary);
+  font-weight: 500;
 }
 
 .main-content {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
+  max-width: var(--efh-max-width);
+  margin: 0 auto;
+  padding: 24px 20px;
   width: 100%;
 }
 
 .drawer-user {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 4px 16px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #ebeef5;
+  gap: 14px;
+  padding: 8px 4px 20px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--efh-border-light);
 }
 
 .drawer-nickname {
   font-weight: 600;
-  color: #303133;
+  font-size: 16px;
+  color: var(--efh-text);
 }
 
 .drawer-username {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: 13px;
+  color: var(--efh-text-muted);
+  margin-top: 2px;
 }
 
 .drawer-actions {

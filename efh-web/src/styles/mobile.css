@@ -75,8 +75,12 @@ body {
     max-width: none !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 10px !important;
-    padding-bottom: calc(var(--efh-tabbar-height) + var(--efh-safe-bottom) + 10px) !important;
+    padding: 12px !important;
+    padding-bottom: calc(var(--efh-tabbar-height) + var(--efh-safe-bottom) + 12px) !important;
+  }
+
+  .main-layout .main-content.no-tabbar-padding {
+    padding-bottom: calc(var(--efh-safe-bottom) + 12px) !important;
   }
 
   .main-layout .mobile-tabbar {
@@ -86,10 +90,12 @@ body {
     bottom: 0;
     z-index: 1000;
     display: flex !important;
-    background: #fff;
-    border-top: 1px solid #ebeef5;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--efh-border-light);
     padding-bottom: var(--efh-safe-bottom);
-    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.06);
     height: var(--efh-tabbar-height);
   }
 
@@ -103,8 +109,9 @@ body {
     padding: 4px 0;
     border: none;
     background: transparent;
-    color: #909399;
-    font-size: 11px;
+    color: var(--efh-text-muted);
+    font-size: 10px;
+    font-weight: 500;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
@@ -114,7 +121,7 @@ body {
   }
 
   .main-layout .tab-item.active {
-    color: #409eff;
+    color: var(--efh-primary);
   }
 
   /* Element Plus 对话框 / 抽屉 */

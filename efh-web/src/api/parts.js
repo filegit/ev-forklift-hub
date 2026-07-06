@@ -60,6 +60,14 @@ export const confirmReceive = (id) => {
   return request({ url: `/parts/api/parts/order/${id}/confirm`, method: 'post' })
 }
 
+export const shipOrder = (id, data) => {
+  return request({ url: `/parts/api/parts/order/${id}/ship`, method: 'post', data })
+}
+
+export const appendShipmentTrace = (id, data) => {
+  return request({ url: `/parts/api/parts/order/${id}/trace`, method: 'post', data })
+}
+
 export const mockPay = (payNo) => {
   return request({ url: '/parts/api/parts/pay/mock/confirm', method: 'post', params: { payNo } })
 }

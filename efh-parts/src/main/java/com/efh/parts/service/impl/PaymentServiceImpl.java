@@ -14,7 +14,6 @@ import com.efh.parts.service.PartsOrderItemService;
 import com.efh.parts.service.PartsOrderService;
 import com.efh.parts.service.PartsService;
 import com.efh.parts.service.PaymentService;
-import com.efh.parts.service.ShipmentService;
 import com.efh.parts.vo.PayPageVO;
 import com.efh.parts.vo.PayStatusVO;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +44,6 @@ public class PaymentServiceImpl extends ServiceImpl<PartsPaymentMapper, PartsPay
 
     @Autowired
     private PartsService partsService;
-
-    @Autowired
-    private ShipmentService shipmentService;
 
     @Autowired
     private AlipayPayService alipayPayService;
@@ -195,7 +191,6 @@ public class PaymentServiceImpl extends ServiceImpl<PartsPaymentMapper, PartsPay
         order.setPayTime(LocalDateTime.now());
         partsOrderService.updateById(order);
 
-        shipmentService.shipOrder(order.getId());
         log.info("支付完成 payNo={} tradeNo={} orderNo={}", payNo, thirdTradeNo, order.getOrderNo());
     }
 

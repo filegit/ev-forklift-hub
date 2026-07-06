@@ -1,53 +1,80 @@
 <template>
   <div class="pay-page" v-loading="loading">
-    <el-card class="pay-card">
-      <div class="pay-header">
-        <el-icon :size="48" color="#67c23a"><CircleCheck /></el-icon>
-        <h2>订单提交成功，请完成支付</h2>
+    <section class="pay-shell" v-if="detail">
+      <div class="pay-main">
+        <el-icon class="success-icon"><CircleCheck /></el-icon>
+        <span class="efh-kicker">支付确认</span>
+        <h1>订单已创建，等待企业支付</h1>
         <p>订单号：{{ orderNo }}</p>
-      </div>
 
-      <div class="pay-amount">
-        <span>应付金额</span>
-        <span class="amount">¥{{ detail?.order?.payAmount || '0.00' }}</span>
-      </div>
+        <div class="amount-card">
+          <span>应付金额</span>
+          <strong>¥{{ detail?.order?.payAmount || '0.00' }}</strong>
+        </div>
 
-      <div class="pay-methods">
-        <h4>选择支付方式</h4>
-        <el-radio-group v-model="payChannel">
+        <el-radio-group v-model="payChannel" class="pay-methods">
           <el-radio label="alipay" border>
             <span class="pay-option">
-              <img src="https://img.alicdn.com/tfs/TB1Ma_8RXXXXXaXXXXXXXXXXXX-120-120.png" alt="alipay" class="pay-icon" />
-              支付宝
+              <el-icon><Wallet /></el-icon>
+              支付宝网页支付
             </span>
           </el-radio>
-          <el-radio v-if="showMock" label="mock" border>模拟支付（开发调试）</el-radio>
+          <el-radio v-if="showMock" label="mock" border>
+            演示支付
+          </el-radio>
         </el-radio-group>
-        <p v-if="payChannel === 'alipay' && !alipayReady" class="pay-tip">
-          支付宝未配置。请设置环境变量 ALIPAY_ENABLED=true 及商户密钥，或使用沙箱账号。
-        </p>
+
+        <el-alert
+          v-if="payChannel === 'alipay' && !alipayReady"
+          title="支付宝暂未完成配置。生产环境需要配置 ALIPAY_ENABLED=true、应用私钥、公钥与回调地址；本地演示可使用演示支付。"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+
+        <el-button
+          type="primary"
+          size="large"
+          class="pay-btn"
+          :loading="paying"
+          :disabled="payChannel === 'alipay' && !alipayReady"
+          @click="handlePay"
+        >
+          {{ payChannel === 'alipay' ? '跳转支付宝支付' : '确认演示支付' }}
+        </el-button>
+        <el-button link @click="$router.push('/orders')">稍后支付，查看订单</el-button>
       </div>
 
-      <el-button
-        type="danger"
-        size="large"
-        class="pay-btn"
-        :loading="paying"
-        :disabled="payChannel === 'alipay' && !alipayReady"
-        @click="handlePay"
-      >
-        {{ payChannel === 'alipay' ? '跳转支付宝支付' : '确认支付' }}
-        ¥{{ detail?.order?.payAmount || '0.00' }}
-      </el-button>
-      <el-button link @click="$router.push('/orders')">稍后支付，查看订单</el-button>
-    </el-card>
+      <aside class="pay-aside">
+        <h3>真实接入建议</h3>
+        <p>支付优先走支付宝官方沙箱和生产接口，无需购买额外套餐；物流先由仓库录入承运商和运单，成本最低且可上线。</p>
+        <div class="efh-status-rail">
+          <div class="efh-status-node active">
+            <span>1</span>
+            <strong>提交订单</strong>
+          </div>
+          <div class="efh-status-node active">
+            <span>2</span>
+            <strong>企业支付</strong>
+          </div>
+          <div class="efh-status-node">
+            <span>3</span>
+            <strong>仓库发货</strong>
+          </div>
+          <div class="efh-status-node">
+            <span>4</span>
+            <strong>签收完成</strong>
+          </div>
+        </div>
+      </aside>
+    </section>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CircleCheck } from '@element-plus/icons-vue'
+import { CircleCheck, Wallet } from '@element-plus/icons-vue'
 import { getOrderByNo, createAlipayPagePay, mockPay } from '@/api/parts'
 import { ElMessage } from 'element-plus'
 
@@ -100,7 +127,7 @@ const handlePay = async () => {
       return
     }
     await mockPay(detail.value.payment.payNo)
-    ElMessage.success('支付成功')
+    ElMessage.success('支付成功，订单已进入待发货')
     router.push(`/orders/${detail.value.order.id}`)
   } catch (e) {
     if (payChannel.value === 'alipay') {
@@ -113,15 +140,101 @@ const handlePay = async () => {
 </script>
 
 <style scoped>
-.pay-page { max-width: 600px; margin: 40px auto; }
-.pay-card { text-align: center; padding: 20px; }
-.pay-header h2 { margin: 16px 0 8px; }
-.pay-header p { color: #909399; }
-.pay-amount { background: #fef0f0; padding: 24px; border-radius: 8px; margin: 24px 0; }
-.pay-amount .amount { display: block; font-size: 36px; color: #f56c6c; font-weight: bold; margin-top: 8px; }
-.pay-methods { text-align: left; margin-bottom: 24px; }
-.pay-option { display: inline-flex; align-items: center; gap: 8px; }
-.pay-icon { width: 24px; height: 24px; }
-.pay-tip { margin-top: 12px; font-size: 13px; color: #e6a23c; line-height: 1.5; }
-.pay-btn { width: 100%; margin-bottom: 12px; }
+.pay-page {
+  max-width: var(--efh-max-width);
+  margin: 0 auto;
+}
+
+.pay-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 18px;
+  align-items: start;
+}
+
+.pay-main,
+.pay-aside {
+  background: #fff;
+  border: 1px solid var(--efh-border-light);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.success-icon {
+  width: 54px;
+  height: 54px;
+  color: var(--efh-primary);
+  background: var(--efh-primary-soft);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.success-icon :deep(svg) {
+  width: 30px;
+  height: 30px;
+}
+
+.pay-main h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.pay-main p,
+.pay-aside p {
+  color: var(--efh-text-secondary);
+  line-height: 1.7;
+}
+
+.amount-card {
+  margin: 22px 0;
+  padding: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.amount-card span {
+  display: block;
+  color: var(--efh-text-secondary);
+}
+
+.amount-card strong {
+  display: block;
+  color: #b45309;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.pay-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
+.pay-methods :deep(.el-radio) {
+  margin-right: 0;
+}
+
+.pay-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pay-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.pay-aside .efh-status-rail {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .pay-shell {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
