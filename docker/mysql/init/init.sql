@@ -204,7 +204,8 @@ USE `efh_parts`;
 
 -- 配件表
 CREATE TABLE IF NOT EXISTS `parts` (
-  `id` BIGINT NOT NULL COMMENT '配件ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '配件ID',
+  `seller_id` BIGINT NOT NULL DEFAULT 1 COMMENT '卖家ID',
   `name` VARCHAR(100) NOT NULL COMMENT '配件名称',
   `category` VARCHAR(50) DEFAULT NULL COMMENT '分类',
   `brand` VARCHAR(50) DEFAULT NULL COMMENT '品牌',
@@ -214,12 +215,14 @@ CREATE TABLE IF NOT EXISTS `parts` (
   `images` TEXT DEFAULT NULL COMMENT '图片URL列表（JSON）',
   `description` TEXT DEFAULT NULL COMMENT '描述',
   `status` TINYINT DEFAULT 1 COMMENT '状态：0-下架，1-上架',
+  `sales_count` INT NOT NULL DEFAULT 0 COMMENT '销量',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_category` (`category`),
-  KEY `idx_brand` (`brand`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配件表';
+  KEY `idx_brand` (`brand`),
+  KEY `idx_seller_id` (`seller_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='配件表';
 
 -- 配件订单表
 CREATE TABLE IF NOT EXISTS `parts_order` (
@@ -296,10 +299,10 @@ INSERT INTO `user` (`id`, `username`, `password`, `nickname`, `phone`, `email`, 
 
 -- 插入测试配件
 USE `efh_parts`;
-INSERT INTO `parts` (`id`, `name`, `category`, `brand`, `model`, `price`, `stock`, `description`, `status`) VALUES
-(1, '电池组', '电池', '比亚迪', 'BYD-48V-200AH', 8999.00, 50, '48V 200AH 磷酸铁锂电池组', 1),
-(2, '电机', '动力系统', '汇川', 'HC-15KW', 12999.00, 30, '15KW 交流电机', 1),
-(3, '控制器', '电控系统', '英威腾', 'YWT-500A', 5999.00, 40, '500A 控制器', 1);
+INSERT INTO `parts` (`id`, `seller_id`, `name`, `category`, `brand`, `model`, `price`, `stock`, `description`, `status`, `sales_count`) VALUES
+(1, 1, '电池组', '电池', '比亚迪', 'BYD-48V-200AH', 8999.00, 50, '48V 200AH 磷酸铁锂电池组', 1, 0),
+(2, 1, '电机', '动力系统', '汇川', 'HC-15KW', 12999.00, 30, '15KW 交流电机', 1, 0),
+(3, 1, '控制器', '电控系统', '英威腾', 'YWT-500A', 5999.00, 40, '500A 控制器', 1, 0);
 
 -- 插入测试维修师傅
 USE `efh_service`;

@@ -120,8 +120,8 @@ CREATE TABLE IF NOT EXISTS `parts` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配件商品';
 
-ALTER TABLE `parts` ADD COLUMN IF NOT EXISTS `seller_id` BIGINT NOT NULL DEFAULT 1 COMMENT '卖家ID';
-ALTER TABLE `parts` ADD COLUMN IF NOT EXISTS `sales_count` INT NOT NULL DEFAULT 0 COMMENT '销量';
+ALTER TABLE `parts` ADD COLUMN `seller_id` BIGINT NOT NULL DEFAULT 1 COMMENT '卖家ID';
+ALTER TABLE `parts` ADD COLUMN `sales_count` INT NOT NULL DEFAULT 0 COMMENT '销量';
 
 INSERT IGNORE INTO `parts` (`id`, `seller_id`, `name`, `description`, `category`, `brand`, `model`, `price`, `stock`, `images`, `status`, `sales_count`) VALUES
 (1, 1, '锂电池组 48V 400Ah', '适用于各类电动叉车，续航持久，充电快速', '电池', '宁德时代', 'CB48-400', 12800.00, 50, 'https://via.placeholder.com/400x300?text=Battery', 1, 128),
