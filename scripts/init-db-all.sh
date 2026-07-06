@@ -6,6 +6,8 @@ for f in docker/mysql/init/01-nacos.sql docker/mysql/init/init.sql docker/mysql/
   docker exec -i efh-mysql mysql -uroot -p123456 < "$f" 2>&1 | tail -1
 done
 docker exec -i efh-mysql mysql -uroot -p123456 < scripts/fix-service-table.sql 2>/dev/null || true
+docker exec -i efh-mysql mysql -uroot -p123456 < scripts/fix-parts-table.sql 2>/dev/null || true
+docker exec -i efh-mysql mysql -uroot -p123456 < scripts/fix-community-post-table.sql 2>/dev/null || true
 echo "=== efh_community_0 tables ==="
 docker exec efh-mysql mysql -uroot -p123456 -e "SHOW TABLES FROM efh_community_0;" 2>/dev/null
 echo "=== efh_parts tables ==="

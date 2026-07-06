@@ -107,7 +107,7 @@ CREATE DATABASE IF NOT EXISTS `efh_community_1` DEFAULT CHARACTER SET utf8mb4 CO
 USE `efh_community_0`;
 
 CREATE TABLE IF NOT EXISTS `post_0` (
-  `id` BIGINT NOT NULL COMMENT '帖子ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `title` VARCHAR(200) NOT NULL COMMENT '标题',
   `content` TEXT NOT NULL COMMENT '内容',
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `post_3` LIKE `post_0`;
 
 -- 评论表 - 数据库 0（需要创建 4 个分表）
 CREATE TABLE IF NOT EXISTS `comment_0` (
-  `id` BIGINT NOT NULL COMMENT '评论ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `post_id` BIGINT NOT NULL COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `content` TEXT NOT NULL COMMENT '评论内容',
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `comment_3` LIKE `comment_0`;
 USE `efh_community_1`;
 
 CREATE TABLE IF NOT EXISTS `post_0` (
-  `id` BIGINT NOT NULL COMMENT '帖子ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `title` VARCHAR(200) NOT NULL COMMENT '标题',
   `content` TEXT NOT NULL COMMENT '内容',
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `post_3` LIKE `post_0`;
 
 -- 评论表 - 数据库 1（需要创建 4 个分表）
 CREATE TABLE IF NOT EXISTS `comment_0` (
-  `id` BIGINT NOT NULL COMMENT '评论ID',
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `post_id` BIGINT NOT NULL COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `content` TEXT NOT NULL COMMENT '评论内容',
