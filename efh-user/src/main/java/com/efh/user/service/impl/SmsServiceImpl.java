@@ -3,6 +3,7 @@ package com.efh.user.service.impl;
 import com.efh.common.exception.BusinessException;
 import com.efh.user.config.SmsProperties;
 import com.efh.user.entity.User;
+import com.efh.user.service.AliyunPnvsSmsSender;
 import com.efh.user.service.SmsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class SmsServiceImpl implements SmsService {
     @Autowired
     private SmsProperties smsProperties;
 
+    @Autowired
+    private AliyunPnvsSmsSender aliyunPnvsSmsSender;
+
     @Override
     public String sendLoginCode(User user) {
         if (user == null) {
@@ -40,45 +44,48 @@ public class SmsServiceImpl implements SmsService {
             throw new BusinessException("发送过于频繁，请稍后再试");
         }
 
-        String code = generateCode();
-        String codeKey = CODE_KEY_PREFIX + user.getUsername();
-        stringRedisTemplate.opsForValue().set(codeKey, code,
-                smsProperties.getCodeExpireSeconds(), TimeUnit.SECONDS);
         stringRedisTemplate.opsForValue().set(intervalKey, "1",
                 smsProperties.getSendIntervalSeconds(), TimeUnit.SECONDS);
 
-        dispatchSms(user.getPhone(), code);
-
         if (smsProperties.isMock()) {
-            log.info("[SMS-MOCK] 登录验证码 username={} phone={} code={}", user.getUsername(), maskPhone(user.getPhone()), code);
+            String code = generateCode();
+            String codeKey = CODE_KEY_PREFIX + user.getUsername();
+            stringRedisTemplate.opsForValue().set(codeKey, code,
+                    smsProperties.getCodeExpireSeconds(), TimeUnit.SECONDS);
+            log.info("[SMS-MOCK] 登录验证码 username={} phone={} code={}",
+                    user.getUsername(), maskPhone(user.getPhone()), code);
             return code;
+        }
+
+        try {
+            aliyunPnvsSmsSender.sendVerificationCode(user.getPhone());
+        } catch (Exception e) {
+            stringRedisTemplate.delete(intervalKey);
+            throw e;
         }
         return null;
     }
 
     @Override
-    public void verifyLoginCode(String username, String code) {
+    public void verifyLoginCode(String username, String phone, String code) {
         if (!StringUtils.hasText(code)) {
             throw new BusinessException("请输入短信验证码");
         }
-        String codeKey = CODE_KEY_PREFIX + username;
-        String cached = stringRedisTemplate.opsForValue().get(codeKey);
-        if (!StringUtils.hasText(cached)) {
-            throw new BusinessException("验证码已过期，请重新获取");
-        }
-        if (!cached.equals(code.trim())) {
-            throw new BusinessException("短信验证码错误");
-        }
-        stringRedisTemplate.delete(codeKey);
-    }
 
-    private void dispatchSms(String phone, String code) {
         if (smsProperties.isMock()) {
+            String codeKey = CODE_KEY_PREFIX + username;
+            String cached = stringRedisTemplate.opsForValue().get(codeKey);
+            if (!StringUtils.hasText(cached)) {
+                throw new BusinessException("验证码已过期，请重新获取");
+            }
+            if (!cached.equals(code.trim())) {
+                throw new BusinessException("短信验证码错误");
+            }
+            stringRedisTemplate.delete(codeKey);
             return;
         }
-        // 预留真实短信通道，可按阿里云/腾讯云 SDK 接入
-        log.warn("真实短信通道未配置，请设置 efh.sms.mock=true 或配置阿里云密钥");
-        throw new BusinessException("短信服务未配置，请联系管理员");
+
+        aliyunPnvsSmsSender.checkVerificationCode(phone, code);
     }
 
     private String generateCode() {

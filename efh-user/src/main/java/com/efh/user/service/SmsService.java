@@ -10,7 +10,7 @@ public interface SmsService {
     String sendLoginCode(User user);
 
     /**
-     * 校验登录验证码，成功后删除
+     * 校验登录验证码
      */
-    void verifyLoginCode(String username, String code);
+    void verifyLoginCode(String username, String phone, String code);
 }

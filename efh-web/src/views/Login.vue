@@ -106,10 +106,10 @@ const handleSendSms = async () => {
   try {
     const res = await sendLoginSms({ username: loginForm.value.username.trim() })
     const mockCode = res.data?.mockCode
-    if (mockCode) {
+    if (mockCode != null) {
       ElMessage.success(`验证码已发送（演示：${mockCode}）`)
     } else {
-      ElMessage.success(res.data?.message || '验证码已发送')
+      ElMessage.success(res.data?.message || '验证码已发送到绑定手机，请注意查收')
     }
     startSmsCountdown()
   } catch (error) {

@@ -116,7 +116,7 @@ public class UserController {
             data.put("mockCode", mockCode);
             data.put("message", "演示模式：验证码为 " + mockCode);
         } else {
-            data.put("message", "验证码已发送");
+            data.put("message", "验证码已发送到绑定手机，请注意查收");
         }
         return Result.success(data);
     }

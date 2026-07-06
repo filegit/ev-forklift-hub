@@ -146,7 +146,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户名或密码错误");
         }
 
-        smsService.verifyLoginCode(vo.getUsername(), vo.getSmsCode());
+        smsService.verifyLoginCode(vo.getUsername(), user.getPhone(), vo.getSmsCode());
 
         log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
 
