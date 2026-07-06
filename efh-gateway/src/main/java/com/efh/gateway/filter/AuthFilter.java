@@ -40,6 +40,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/user/api/register",
             "/community/api/post/list",
             "/community/api/comment/list",
+            "/parts/api/parts/list",
+            "/parts/api/parts/pay/alipay/notify",
+            "/knowledge/api/knowledge/doc/list",
+            "/knowledge/api/knowledge/doc/categories",
+            "/knowledge/api/knowledge/pay/alipay/notify",
+            "/agent/api/agent/health",
             "/actuator",
             "/user/actuator",
             "/community/actuator",
@@ -59,9 +65,29 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
 
-        // 1. 白名单路径直接放行
+        // 1. 白名单路径：可选认证（有 Token 则传递 X-User-Id）
         if (WHITE_LIST.stream().anyMatch(path::startsWith)) {
-            return chain.filter(exchange);
+            return passWithOptionalAuth(exchange, chain);
+        }
+
+        // 配件商城公开浏览
+        if (path.startsWith("/parts/api/parts/list") || path.matches("/parts/api/parts/\\d+")) {
+            return passWithOptionalAuth(exchange, chain);
+        }
+
+        // 帖子详情公开浏览
+        if ("GET".equals(request.getMethod().name()) && path.matches("/community/api/post/\\d+")) {
+            return passWithOptionalAuth(exchange, chain);
+        }
+
+        // 知识库文档详情公开预览
+        if ("GET".equals(request.getMethod().name()) && path.matches("/knowledge/api/knowledge/doc/\\d+")) {
+            return passWithOptionalAuth(exchange, chain);
+        }
+
+        // Agent 问答：可选认证（未登录仅检索免费资料与公开社区）
+        if ("POST".equals(request.getMethod().name()) && path.equals("/agent/api/agent/chat")) {
+            return passWithOptionalAuth(exchange, chain);
         }
 
         // 2. 获取请求头中的 Authorization Token
@@ -103,6 +129,30 @@ public class AuthFilter implements GlobalFilter, Ordered {
             ServerHttpResponse response = exchange.getResponse();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
+        }
+    }
+
+    /** 公开接口：不强制登录，但若携带有效 Token 则向下游传递 X-User-Id */
+    private Mono<Void> passWithOptionalAuth(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+        String token = request.getHeaders().getFirst("Authorization");
+        if (token == null || token.isEmpty()) {
+            return chain.filter(exchange);
+        }
+        try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            if (JwtUtil.isTokenExpired(token)) {
+                return chain.filter(exchange);
+            }
+            Long userId = JwtUtil.getUserId(token);
+            ServerHttpRequest mutatedRequest = request.mutate()
+                    .header("X-User-Id", String.valueOf(userId))
+                    .build();
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+        } catch (Exception e) {
+            return chain.filter(exchange);
         }
     }
 

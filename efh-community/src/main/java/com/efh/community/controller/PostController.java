@@ -73,6 +73,21 @@ public class PostController {
         
         return Result.success(postPage);
     }
+
+    /**
+     * 我的帖子
+     */
+    @GetMapping("/my")
+    public Result<IPage<Post>> getMyPosts(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                                          @RequestParam(defaultValue = "1") Integer page,
+                                          @RequestParam(defaultValue = "20") Integer size) {
+        Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
+        if (userId == null) {
+            return Result.error(401, "未授权");
+        }
+        IPage<Post> postPage = postService.getMyPosts(userId, new Page<>(page, size));
+        return Result.success(postPage);
+    }
     
     /**
      * 帖子详情

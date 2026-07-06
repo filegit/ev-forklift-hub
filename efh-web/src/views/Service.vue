@@ -12,9 +12,9 @@
       
       <el-tabs v-model="activeTab">
         <el-tab-pane label="我的订单" name="orders" v-if="userStore.token">
-          <el-table :data="orderList" style="width: 100%">
-            <el-table-column prop="id" label="订单号" width="100" />
-            <el-table-column prop="serviceType" label="服务类型" width="120" />
+          <el-table :data="orderList" style="width: 100%" v-loading="loading">
+            <el-table-column prop="orderNo" label="工单号" width="180" />
+            <el-table-column prop="title" label="服务类型" width="120" />
             <el-table-column prop="description" label="问题描述" />
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
@@ -27,14 +27,14 @@
             <el-table-column label="操作" width="150">
               <template #default="{ row }">
                 <el-button size="small" @click="viewOrder(row)">查看</el-button>
-                <el-button size="small" type="danger" @click="cancelOrder(row)" v-if="row.status === 'pending'">
+                <el-button size="small" type="danger" @click="cancelOrder(row)" v-if="row.status === 0">
                   取消
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
           
-          <el-empty v-if="orderList.length === 0" description="暂无订单" />
+          <el-empty v-if="!loading && orderList.length === 0" description="暂无订单" />
         </el-tab-pane>
         
         <el-tab-pane label="服务介绍" name="intro">
@@ -67,14 +67,13 @@
       </el-tabs>
     </el-card>
     
-    <!-- 预约维修对话框 -->
     <el-dialog v-model="showOrderDialog" title="预约维修" width="500px">
       <el-form :model="orderForm" label-width="100px">
         <el-form-item label="服务类型">
           <el-select v-model="orderForm.serviceType" placeholder="请选择">
-            <el-option label="故障诊断" value="diagnosis" />
-            <el-option label="维修保养" value="maintenance" />
-            <el-option label="紧急救援" value="emergency" />
+            <el-option label="故障诊断" :value="1" />
+            <el-option label="维修保养" :value="2" />
+            <el-option label="紧急救援" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="问题描述">
@@ -89,7 +88,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showOrderDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitOrder">提交</el-button>
+        <el-button type="primary" @click="submitOrder" :loading="submitting">提交</el-button>
       </template>
     </el-dialog>
   </div>
@@ -98,44 +97,82 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getServiceOrders, createServiceOrder, cancelServiceOrder } from '@/api/service'
 
 const userStore = useUserStore()
 const activeTab = ref(userStore.token ? 'orders' : 'intro')
 const orderList = ref([])
+const loading = ref(false)
+const submitting = ref(false)
 const showOrderDialog = ref(false)
 const orderForm = ref({
-  serviceType: '',
+  serviceType: 1,
   description: '',
   phone: '',
   address: ''
 })
 
 const fetchOrderList = async () => {
-  // TODO: 调用订单列表 API
-  ElMessage.info('订单列表功能开发中')
+  if (!userStore.token) return
+  loading.value = true
+  try {
+    const res = await getServiceOrders()
+    orderList.value = res.data || []
+  } catch (error) {
+    ElMessage.error('获取订单列表失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-const submitOrder = () => {
-  ElMessage.success('预约成功')
-  showOrderDialog.value = false
+const submitOrder = async () => {
+  if (!orderForm.value.serviceType || !orderForm.value.description || !orderForm.value.phone || !orderForm.value.address) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+  submitting.value = true
+  try {
+    await createServiceOrder(orderForm.value)
+    ElMessage.success('预约成功')
+    showOrderDialog.value = false
+    orderForm.value = { serviceType: 1, description: '', phone: '', address: '' }
+    await fetchOrderList()
+  } catch (error) {
+    // handled by request interceptor
+  } finally {
+    submitting.value = false
+  }
 }
 
 const viewOrder = (row) => {
-  ElMessage.info('查看订单详情')
+  ElMessageBox.alert(
+    `工单号：${row.orderNo}\n服务：${row.title}\n描述：${row.description}\n地址：${row.address}\n电话：${row.phone}`,
+    '工单详情',
+    { confirmButtonText: '确定' }
+  )
 }
 
-const cancelOrder = (row) => {
-  ElMessage.success('取消成功')
+const cancelOrder = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定取消该工单吗？', '提示', { type: 'warning' })
+    await cancelServiceOrder(row.id)
+    ElMessage.success('取消成功')
+    await fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      // handled by request interceptor
+    }
+  }
 }
 
 const getStatusType = (status) => {
-  const map = { pending: 'warning', processing: 'primary', completed: 'success', cancelled: 'info' }
+  const map = { 0: 'warning', 1: 'primary', 2: 'primary', 3: 'success', 4: 'info' }
   return map[status] || 'info'
 }
 
 const getStatusText = (status) => {
-  const map = { pending: '待处理', processing: '处理中', completed: '已完成', cancelled: '已取消' }
+  const map = { 0: '待处理', 1: '已接单', 2: '服务中', 3: '已完成', 4: '已取消' }
   return map[status] || '未知'
 }
 

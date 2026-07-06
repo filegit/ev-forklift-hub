@@ -33,3 +33,11 @@ export const likePost = (id) => {
     method: 'post'
   })
 }
+
+export const getMyPosts = (params) => {
+  return request({
+    url: '/community/api/post/my',
+    method: 'get',
+    params
+  })
+}

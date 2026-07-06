@@ -43,9 +43,9 @@ public class PartsServiceImpl extends ServiceImpl<PartsMapper, Parts> implements
         }
         
         if (StrUtil.isNotBlank(keyword)) {
-            wrapper.like(Parts::getName, keyword)
-                   .or()
-                   .like(Parts::getDescription, keyword);
+            wrapper.and(w -> w.like(Parts::getName, keyword)
+                    .or()
+                    .like(Parts::getDescription, keyword));
         }
         
         wrapper.orderByDesc(Parts::getCreateTime);

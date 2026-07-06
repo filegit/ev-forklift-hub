@@ -7,6 +7,7 @@ import com.efh.community.entity.CommentLike;
 import com.efh.community.mapper.CommentLikeMapper;
 import com.efh.community.mapper.CommentMapper;
 import com.efh.community.service.CommentLikeService;
+import com.efh.community.service.PointsRewardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
     
     @Autowired
     private CommentMapper commentMapper;
+
+    @Autowired
+    private PointsRewardService pointsRewardService;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -46,6 +50,7 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
             if (comment != null) {
                 comment.setLikeCount(comment.getLikeCount() + 1);
                 commentMapper.updateById(comment);
+                rewardCommentAuthor(comment, userId);
             }
             
             log.info("评论点赞成功: userId={}, commentId={}", userId, commentId);
@@ -72,6 +77,7 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
             if (comment != null) {
                 comment.setLikeCount(comment.getLikeCount() + 1);
                 commentMapper.updateById(comment);
+                rewardCommentAuthor(comment, userId);
             }
             
             log.info("重新评论点赞: userId={}, commentId={}", userId, commentId);
@@ -86,5 +92,11 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
                .eq(CommentLike::getStatus, 1);
         
         return this.getOne(wrapper) != null;
+    }
+
+    private void rewardCommentAuthor(Comment comment, Long likerId) {
+        if (comment.getUserId() != null && !comment.getUserId().equals(likerId)) {
+            pointsRewardService.reward(comment.getUserId(), PointsRewardService.COMMENT_RECEIVED_LIKE, "评论被点赞");
+        }
     }
 }

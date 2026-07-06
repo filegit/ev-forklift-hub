@@ -25,3 +25,11 @@ export const deleteComment = (id) => {
     method: 'delete'
   })
 }
+
+export const getMyComments = (params) => {
+  return request({
+    url: '/community/api/comment/my',
+    method: 'get',
+    params
+  })
+}

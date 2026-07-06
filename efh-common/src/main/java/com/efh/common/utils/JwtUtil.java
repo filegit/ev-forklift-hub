@@ -51,6 +51,19 @@ public class JwtUtil {
     }
     
     /**
+     * 从 Authorization 请求头中提取纯 Token（去除 Bearer 前缀）
+     */
+    public static String resolveToken(String authorization) {
+        if (authorization == null || authorization.isEmpty()) {
+            return authorization;
+        }
+        if (authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
+        return authorization;
+    }
+
+    /**
      * 解析 JWT Token
      * 
      * @param token JWT Token 字符串
@@ -61,7 +74,7 @@ public class JwtUtil {
         return Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)      // 设置签名密钥
                 .build()
-                .parseClaimsJws(token)          // 解析 Token
+                .parseClaimsJws(resolveToken(token))          // 解析 Token
                 .getBody();                     // 获取声明体
     }
     

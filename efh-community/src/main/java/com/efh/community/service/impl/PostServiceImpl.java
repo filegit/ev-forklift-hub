@@ -8,6 +8,7 @@ import com.efh.common.exception.BusinessException;
 import com.efh.community.entity.Post;
 import com.efh.community.mapper.PostMapper;
 import com.efh.community.service.PostService;
+import com.efh.community.service.PointsRewardService;
 import com.efh.community.vo.PostVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private PointsRewardService pointsRewardService;
     
     private static final String POST_CACHE_PREFIX = "post:detail:";
     private static final int CACHE_EXPIRE_MINUTES = 30;
@@ -49,6 +53,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         
         log.info("创建帖子成功: postId={}", post.getId());
+        pointsRewardService.reward(userId, PointsRewardService.POST_CREATE, "发布帖子");
     }
     
     @Override
@@ -128,6 +133,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         redisTemplate.delete(cacheKey);
         
         log.info("点赞帖子成功: postId={}, likeCount={}", postId, post.getLikeCount());
+    }
+
+    @Override
+    public IPage<Post> getMyPosts(Long userId, Page<Post> page) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getUserId, userId)
+               .eq(Post::getStatus, 1)
+               .orderByDesc(Post::getCreateTime);
+        return this.page(page, wrapper);
     }
     
     /**

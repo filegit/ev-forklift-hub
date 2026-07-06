@@ -20,6 +20,8 @@
         <module>efh-community</module>
         <module>efh-parts</module>
         <module>efh-service</module>
+        <module>efh-knowledge</module>
+        <module>efh-agent</module>
     </modules>
 
     <!-- 依赖版本管理 -->
@@ -104,6 +106,11 @@
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-data-27</artifactId>
                 <version>${redisson.version}</version>
             </dependency>
 

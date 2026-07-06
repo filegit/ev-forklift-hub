@@ -7,6 +7,7 @@ import com.efh.community.entity.PostLike;
 import com.efh.community.mapper.PostLikeMapper;
 import com.efh.community.mapper.PostMapper;
 import com.efh.community.service.PostLikeService;
+import com.efh.community.service.PointsRewardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class PostLikeServiceImpl extends ServiceImpl<PostLikeMapper, PostLike> i
     
     @Autowired
     private PostMapper postMapper;
+
+    @Autowired
+    private PointsRewardService pointsRewardService;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -47,6 +51,7 @@ public class PostLikeServiceImpl extends ServiceImpl<PostLikeMapper, PostLike> i
             if (post != null) {
                 post.setLikeCount(post.getLikeCount() + 1);
                 postMapper.updateById(post);
+                rewardPostAuthor(post, userId);
             }
             
             log.info("点赞成功: userId={}, postId={}", userId, postId);
@@ -73,6 +78,7 @@ public class PostLikeServiceImpl extends ServiceImpl<PostLikeMapper, PostLike> i
             if (post != null) {
                 post.setLikeCount(post.getLikeCount() + 1);
                 postMapper.updateById(post);
+                rewardPostAuthor(post, userId);
             }
             
             log.info("重新点赞: userId={}, postId={}", userId, postId);
@@ -87,5 +93,11 @@ public class PostLikeServiceImpl extends ServiceImpl<PostLikeMapper, PostLike> i
                .eq(PostLike::getStatus, 1);
         
         return this.getOne(wrapper) != null;
+    }
+
+    private void rewardPostAuthor(Post post, Long likerId) {
+        if (post.getUserId() != null && !post.getUserId().equals(likerId)) {
+            pointsRewardService.reward(post.getUserId(), PointsRewardService.POST_RECEIVED_LIKE, "帖子被点赞");
+        }
     }
 }

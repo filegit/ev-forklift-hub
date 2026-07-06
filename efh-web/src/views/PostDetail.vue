@@ -106,6 +106,10 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getPostDetail } from '@/api/post'
+import { getCommentList, createComment, deleteComment } from '@/api/comment'
+import { likePost, checkPostLike, likeComment, checkCommentLike } from '@/api/like'
+import { collectPost, checkCollection } from '@/api/collection'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -121,9 +125,8 @@ const commentLikes = ref(new Set())
 const fetchPostDetail = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/community/api/post/${route.params.id}`)
-    const data = await res.json()
-    post.value = data.data
+    const res = await getPostDetail(route.params.id)
+    post.value = res.data
   } catch (error) {
     ElMessage.error('获取帖子详情失败')
   } finally {
@@ -133,9 +136,8 @@ const fetchPostDetail = async () => {
 
 const fetchCommentList = async () => {
   try {
-    const res = await fetch(`/api/community/api/comment/list?postId=${route.params.id}`)
-    const data = await res.json()
-    commentList.value = data.data.records || []
+    const res = await getCommentList({ postId: route.params.id })
+    commentList.value = res.data.records || []
   } catch (error) {
     ElMessage.error('获取评论列表失败')
   }
@@ -143,13 +145,9 @@ const fetchCommentList = async () => {
 
 const checkLikeStatus = async () => {
   if (!userStore.token) return
-  
   try {
-    const res = await fetch(`/api/like/post/${route.params.id}/check`, {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    isLiked.value = data.data
+    const res = await checkPostLike(route.params.id)
+    isLiked.value = res.data
   } catch (error) {
     console.error(error)
   }
@@ -157,13 +155,9 @@ const checkLikeStatus = async () => {
 
 const checkCollectionStatus = async () => {
   if (!userStore.token) return
-  
   try {
-    const res = await fetch(`/api/collection/check/${route.params.id}`, {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    isCollected.value = data.data
+    const res = await checkCollection(route.params.id)
+    isCollected.value = res.data
   } catch (error) {
     console.error(error)
   }
@@ -171,14 +165,10 @@ const checkCollectionStatus = async () => {
 
 const checkCommentLikes = async () => {
   if (!userStore.token) return
-  
   for (const comment of commentList.value) {
     try {
-      const res = await fetch(`/api/like/comment/${comment.id}/check`, {
-        headers: { 'Authorization': `Bearer ${userStore.token}` }
-      })
-      const data = await res.json()
-      if (data.data) {
+      const res = await checkCommentLike(comment.id)
+      if (res.data) {
         commentLikes.value.add(comment.id)
       }
     } catch (error) {
@@ -189,39 +179,27 @@ const checkCommentLikes = async () => {
 
 const handleLike = async () => {
   try {
-    const res = await fetch(`/api/like/post/${route.params.id}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      isLiked.value = !isLiked.value
-      if (isLiked.value) {
-        post.value.likeCount++
-        ElMessage.success('点赞成功')
-      } else {
-        post.value.likeCount--
-        ElMessage.success('已取消点赞')
-      }
+    await likePost(route.params.id)
+    isLiked.value = !isLiked.value
+    if (isLiked.value) {
+      post.value.likeCount++
+      ElMessage.success('点赞成功')
+    } else {
+      post.value.likeCount--
+      ElMessage.success('已取消点赞')
     }
   } catch (error) {
-    ElMessage.error('操作失败')
+    // handled by interceptor
   }
 }
 
 const handleCollection = async () => {
   try {
-    const res = await fetch(`/api/collection/${route.params.id}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      isCollected.value = !isCollected.value
-      ElMessage.success(isCollected.value ? '收藏成功' : '已取消收藏')
-    }
+    await collectPost(route.params.id)
+    isCollected.value = !isCollected.value
+    ElMessage.success(isCollected.value ? '收藏成功' : '已取消收藏')
   } catch (error) {
-    ElMessage.error('操作失败')
+    // handled by interceptor
   }
 }
 
@@ -230,30 +208,19 @@ const handleComment = async () => {
     ElMessage.warning('请输入评论内容')
     return
   }
-  
   commenting.value = true
   try {
-    const res = await fetch('/api/community/api/comment', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        postId: route.params.id,
-        content: commentContent.value,
-        parentId: 0
-      })
+    await createComment({
+      postId: route.params.id,
+      content: commentContent.value,
+      parentId: 0
     })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('评论成功')
-      commentContent.value = ''
-      fetchCommentList()
-      post.value.commentCount++
-    }
+    ElMessage.success('评论成功')
+    commentContent.value = ''
+    fetchCommentList()
+    post.value.commentCount++
   } catch (error) {
-    ElMessage.error('评论失败')
+    // handled by interceptor
   } finally {
     commenting.value = false
   }
@@ -261,23 +228,17 @@ const handleComment = async () => {
 
 const handleCommentLike = async (commentId) => {
   try {
-    const res = await fetch(`/api/like/comment/${commentId}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      const comment = commentList.value.find(c => c.id === commentId)
-      if (commentLikes.value.has(commentId)) {
-        commentLikes.value.delete(commentId)
-        comment.likeCount--
-      } else {
-        commentLikes.value.add(commentId)
-        comment.likeCount++
-      }
+    await likeComment(commentId)
+    const comment = commentList.value.find(c => c.id === commentId)
+    if (commentLikes.value.has(commentId)) {
+      commentLikes.value.delete(commentId)
+      comment.likeCount--
+    } else {
+      commentLikes.value.add(commentId)
+      comment.likeCount++
     }
   } catch (error) {
-    ElMessage.error('操作失败')
+    // handled by interceptor
   }
 }
 
@@ -293,16 +254,10 @@ const handleDeleteComment = async (id) => {
       type: 'warning'
     })
     
-    const res = await fetch(`/api/community/api/comment/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('删除成功')
-      fetchCommentList()
-      post.value.commentCount--
-    }
+    await deleteComment(id)
+    ElMessage.success('删除成功')
+    fetchCommentList()
+    post.value.commentCount--
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')

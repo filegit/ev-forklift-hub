@@ -9,6 +9,7 @@ import com.efh.community.entity.Comment;
 import com.efh.community.entity.Post;
 import com.efh.community.mapper.CommentMapper;
 import com.efh.community.service.CommentService;
+import com.efh.community.service.PointsRewardService;
 import com.efh.community.service.PostService;
 import com.efh.community.vo.CommentVO;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private PointsRewardService pointsRewardService;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -67,6 +71,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         postService.updateById(post);
         
         log.info("发表评论成功: commentId={}", comment.getId());
+        pointsRewardService.reward(userId, PointsRewardService.COMMENT_CREATE, "发表评论");
     }
     
     @Override
@@ -113,5 +118,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
         
         log.info("删除评论成功: commentId={}", commentId);
+    }
+
+    @Override
+    public IPage<Comment> getMyComments(Long userId, Page<Comment> page) {
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Comment::getUserId, userId)
+               .orderByDesc(Comment::getCreateTime);
+        return this.page(page, wrapper);
     }
 }

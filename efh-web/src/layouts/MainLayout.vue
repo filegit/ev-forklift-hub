@@ -12,14 +12,23 @@
           mode="horizontal"
           :default-active="activeMenu"
           class="nav-menu"
+          router
           @select="handleMenuSelect"
         >
           <el-menu-item index="/">首页</el-menu-item>
           <el-menu-item index="/parts">配件商城</el-menu-item>
+          <el-menu-item index="/knowledge">知识库</el-menu-item>
+          <el-menu-item index="/assistant">AI助手</el-menu-item>
           <el-menu-item index="/service">维修服务</el-menu-item>
         </el-menu>
         
         <div class="user-actions">
+          <el-badge :value="cartCount" :hidden="!cartCount" :max="99" class="cart-badge">
+            <el-button @click="$router.push('/cart')" v-if="userStore.token">
+              <el-icon><ShoppingCart /></el-icon>
+              购物车
+            </el-button>
+          </el-badge>
           <el-button type="primary" @click="showPostDialog = true" v-if="userStore.token">
             <el-icon><Edit /></el-icon>
             发帖
@@ -34,6 +43,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item command="orders">我的订单</el-dropdown-item>
                   <el-dropdown-item command="collections">我的收藏</el-dropdown-item>
                   <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
                 </el-dropdown-menu>
@@ -90,18 +100,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { createPost } from '@/api/post'
+import { getCartCount } from '@/api/parts'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/parts')) return '/parts'
+  if (route.path.startsWith('/knowledge')) return '/knowledge'
+  if (route.path.startsWith('/orders') || route.path.startsWith('/cart') || route.path.startsWith('/checkout')) return '/parts'
+  return route.path
+})
 const showPostDialog = ref(false)
+const cartCount = ref(0)
 const postForm = ref({
   title: '',
   content: '',
@@ -119,6 +136,8 @@ const handleCommand = (command) => {
     ElMessage.success('退出成功')
   } else if (command === 'profile') {
     router.push('/profile')
+  } else if (command === 'orders') {
+    router.push('/orders')
   } else if (command === 'collections') {
     router.push('/collections')
   }
@@ -144,6 +163,22 @@ const handlePublishPost = async () => {
     console.error(error)
   }
 }
+
+const loadCartCount = async () => {
+  if (!userStore.token) {
+    cartCount.value = 0
+    return
+  }
+  try {
+    const res = await getCartCount()
+    cartCount.value = res.data?.count || 0
+  } catch (e) {
+    cartCount.value = 0
+  }
+}
+
+watch(() => userStore.token, loadCartCount)
+onMounted(loadCartCount)
 </script>
 
 <style scoped>
@@ -199,6 +234,10 @@ const handlePublishPost = async () => {
 .username {
   font-size: 14px;
   color: #606266;
+}
+
+.cart-badge {
+  margin-right: 4px;
 }
 
 .main-content {

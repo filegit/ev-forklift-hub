@@ -27,4 +27,9 @@ public interface PostService extends IService<Post> {
      * 点赞帖子
      */
     void likePost(Long userId, Long postId);
+
+    /**
+     * 我的帖子
+     */
+    IPage<Post> getMyPosts(Long userId, Page<Post> page);
 }

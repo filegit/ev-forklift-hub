@@ -6,24 +6,27 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-/**
- * 订单实体
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("parts_order")
 public class PartsOrder extends BaseEntity {
-    
-    private String orderNo; // 订单号
-    private Long buyerId; // 买家ID
-    private Long sellerId; // 卖家ID
-    private Long partsId; // 零部件ID
-    private String partsName;
-    private BigDecimal price;
-    private Integer quantity;
+
+    private String orderNo;
+    private Long buyerId;
+    private Long sellerId;
     private BigDecimal totalAmount;
-    private Integer status; // 0-待付款 1-待发货 2-待收货 3-已完成 4-已取消
-    private String address; // 收货地址
-    private String phone; // 联系电话
+    private BigDecimal freightAmount;
+    private BigDecimal payAmount;
+    /** 0待付款 1待发货 2待收货 3已完成 4已取消 */
+    private Integer status;
+    private String receiverName;
+    private String receiverPhone;
+    private String receiverAddress;
+    private String remark;
+    private LocalDateTime payTime;
+    private LocalDateTime shipTime;
+    private LocalDateTime receiveTime;
+    private LocalDateTime cancelTime;
 }

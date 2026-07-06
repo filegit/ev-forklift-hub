@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: efh-agent
+  cloud:
+    nacos:
+      username: nacos
+      password: nacos
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        ip: 127.0.0.1
+        namespace: 80fe315a-7634-4d77-b7d3-703a2a24d7a0
+        group: DEFAULT_GROUP
+        enabled: true
+        username: nacos
+        password: nacos
+      config:
+        enabled: false

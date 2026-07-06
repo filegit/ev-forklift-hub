@@ -4,12 +4,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.efh.community.entity.Post;
 import com.efh.community.entity.PostCollection;
 import com.efh.community.mapper.PostCollectionMapper;
+import com.efh.community.mapper.PostMapper;
 import com.efh.community.service.PostCollectionService;
+import com.efh.community.vo.PostCollectionVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 帖子收藏服务实现
@@ -17,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class PostCollectionServiceImpl extends ServiceImpl<PostCollectionMapper, PostCollection> implements PostCollectionService {
+
+    @Autowired
+    private PostMapper postMapper;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -68,5 +78,29 @@ public class PostCollectionServiceImpl extends ServiceImpl<PostCollectionMapper,
                .orderByDesc(PostCollection::getCreateTime);
         
         return this.page(page, wrapper);
+    }
+
+    @Override
+    public IPage<PostCollectionVO> getUserCollectionDetails(Long userId, Page<PostCollection> page) {
+        IPage<PostCollection> collections = getUserCollections(userId, page);
+        Page<PostCollectionVO> voPage = new Page<>(collections.getCurrent(), collections.getSize(), collections.getTotal());
+        List<PostCollectionVO> records = new ArrayList<>();
+        for (PostCollection collection : collections.getRecords()) {
+            PostCollectionVO vo = new PostCollectionVO();
+            vo.setId(collection.getId());
+            vo.setPostId(collection.getPostId());
+            vo.setCreateTime(collection.getCreateTime());
+            Post post = postMapper.selectById(collection.getPostId());
+            if (post != null) {
+                vo.setPostTitle(post.getTitle());
+                vo.setPostContent(post.getContent());
+            } else {
+                vo.setPostTitle("帖子已删除");
+                vo.setPostContent("");
+            }
+            records.add(vo);
+        }
+        voPage.setRecords(records);
+        return voPage;
     }
 }

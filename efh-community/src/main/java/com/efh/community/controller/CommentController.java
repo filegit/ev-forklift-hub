@@ -72,6 +72,21 @@ public class CommentController {
         
         return Result.success(commentPage);
     }
+
+    /**
+     * 我的评论
+     */
+    @GetMapping("/my")
+    public Result<IPage<Comment>> getMyComments(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                                                @RequestParam(defaultValue = "1") Integer page,
+                                                @RequestParam(defaultValue = "20") Integer size) {
+        Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
+        if (userId == null) {
+            return Result.error(401, "未授权");
+        }
+        IPage<Comment> commentPage = commentService.getMyComments(userId, new Page<>(page, size));
+        return Result.success(commentPage);
+    }
     
     /**
      * 删除评论

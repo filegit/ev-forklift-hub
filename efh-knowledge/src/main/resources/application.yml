@@ -1,0 +1,53 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: efh-knowledge
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_knowledge?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${MYSQL_PASSWORD:123456}
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: 6379
+    password: ${REDIS_PASSWORD:123456}
+    database: 3
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+redisson:
+  address: redis://${REDIS_HOST:127.0.0.1}:6379
+  password: ${REDIS_PASSWORD:123456}
+  database: 3
+  timeout: 3000
+  connection-pool-size: 64
+  connection-minimum-idle-size: 10
+
+knowledge:
+  upload-dir: ${KNOWLEDGE_UPLOAD_DIR:./uploads/knowledge}
+  admin-user-type: 9
+  payment:
+    alipay:
+      enabled: ${ALIPAY_ENABLED:false}
+      app-id: ${ALIPAY_APP_ID:}
+      private-key: ${ALIPAY_PRIVATE_KEY:}
+      alipay-public-key: ${ALIPAY_PUBLIC_KEY:}
+      notify-url: ${KNOWLEDGE_ALIPAY_NOTIFY_URL:http://localhost/knowledge/api/knowledge/pay/alipay/notify}
+      return-url: ${KNOWLEDGE_ALIPAY_RETURN_URL:http://localhost/knowledge/unlock/result}
+      sandbox: ${ALIPAY_SANDBOX:true}
+
+efh:
+  user:
+    url: ${EFH_USER_URI:http://127.0.0.1:8081}
+
+logging:
+  level:
+    com.efh: debug

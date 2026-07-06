@@ -86,6 +86,13 @@
             <version>3.5.3.1</version>
             <scope>compile</scope>
         </dependency>
+
+        <!-- 支付宝 SDK（电脑网站支付） -->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.38.200.ALL</version>
+        </dependency>
     </dependencies>
 
     <build>

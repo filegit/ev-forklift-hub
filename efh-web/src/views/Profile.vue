@@ -61,7 +61,7 @@
               <p>{{ comment.content }}</p>
               <div class="comment-meta">
                 <span>{{ formatTime(comment.createTime) }}</span>
-                <el-button text type="danger" @click="deleteComment(comment.id)">删除</el-button>
+                <el-button text type="danger" @click="deleteCommentById(comment.id)">删除</el-button>
               </div>
             </div>
             <el-empty v-if="myComments.length === 0" description="暂无评论" />
@@ -79,6 +79,26 @@
               </div>
             </div>
             <el-empty v-if="myCollections.length === 0" description="暂无收藏" />
+          </div>
+        </el-tab-pane>
+
+        <!-- 购买积分 -->
+        <el-tab-pane label="购买积分" name="purchase">
+          <div class="exchange-section">
+            <div class="exchange-info">
+              <p>当前可用积分: <span class="points">{{ userPoints?.availablePoints || 0 }}</span></p>
+              <p class="hint">模拟支付，购买后积分立即到账</p>
+            </div>
+            <div class="exchange-items">
+              <div class="exchange-item" v-for="pkg in purchasePackages" :key="pkg.id">
+                <h4>{{ pkg.name }}</h4>
+                <p>支付 {{ pkg.money }} 获得 {{ pkg.points }} 积分</p>
+                <div class="exchange-footer">
+                  <span class="points-cost">{{ pkg.money }}</span>
+                  <el-button type="success" size="small" @click="handlePurchase(pkg.id)">购买</el-button>
+                </div>
+              </div>
+            </div>
           </div>
         </el-tab-pane>
 
@@ -151,6 +171,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { getProfile, updateProfile } from '@/api/profile'
+import { getUserPoints, exchangePoints, getExchangeRecords, purchasePoints } from '@/api/points'
+import { getMyPosts } from '@/api/post'
+import { getMyComments, deleteComment } from '@/api/comment'
+import { getMyCollections } from '@/api/collection'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -167,6 +192,12 @@ const exchangeItems = ref([
   { id: 3, name: '礼品卡', description: '200元礼品卡', points: 2000 }
 ])
 
+const purchasePackages = ref([
+  { id: 1, name: '100积分', money: '10元', points: 100 },
+  { id: 2, name: '500积分', money: '45元', points: 500 },
+  { id: 3, name: '1000积分', money: '88元', points: 1000 }
+])
+
 const activeTab = ref('posts')
 const showEditDialog = ref(false)
 const editForm = ref({
@@ -181,12 +212,9 @@ const stats = ref({
 
 const fetchUserInfo = async () => {
   try {
-    const res = await fetch('/api/user/api/info', {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    userInfo.value = data.data
-    editForm.value = { ...data.data }
+    const res = await getProfile()
+    userInfo.value = res.data
+    editForm.value = { nickname: res.data.nickname, phone: res.data.phone }
   } catch (error) {
     ElMessage.error('获取用户信息失败')
   }
@@ -194,11 +222,8 @@ const fetchUserInfo = async () => {
 
 const fetchUserPoints = async () => {
   try {
-    const res = await fetch('/api/points', {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    userPoints.value = data.data
+    const res = await getUserPoints()
+    userPoints.value = res.data
   } catch (error) {
     console.error(error)
   }
@@ -206,11 +231,37 @@ const fetchUserPoints = async () => {
 
 const fetchExchangeRecords = async () => {
   try {
-    const res = await fetch('/api/points/exchanges', {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    exchangeRecords.value = data.data.records || []
+    const res = await getExchangeRecords({ page: 1, size: 20 })
+    exchangeRecords.value = res.data.records || []
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const fetchMyPosts = async () => {
+  try {
+    const res = await getMyPosts({ page: 1, size: 50 })
+    myPosts.value = res.data.records || []
+    stats.value.postCount = res.data.total || myPosts.value.length
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const fetchMyComments = async () => {
+  try {
+    const res = await getMyComments({ page: 1, size: 50 })
+    myComments.value = res.data.records || []
+    stats.value.commentCount = res.data.total || myComments.value.length
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const fetchMyCollections = async () => {
+  try {
+    const res = await getMyCollections({ page: 1, size: 50 })
+    myCollections.value = res.data.records || []
   } catch (error) {
     console.error(error)
   }
@@ -218,20 +269,10 @@ const fetchExchangeRecords = async () => {
 
 const handleUpdateProfile = async () => {
   try {
-    const res = await fetch('/api/profile', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(editForm.value)
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('更新成功')
-      showEditDialog.value = false
-      fetchUserInfo()
-    }
+    await updateProfile(editForm.value)
+    ElMessage.success('更新成功')
+    showEditDialog.value = false
+    fetchUserInfo()
   } catch (error) {
     ElMessage.error('更新失败')
   }
@@ -239,20 +280,22 @@ const handleUpdateProfile = async () => {
 
 const handleExchange = async (itemId) => {
   try {
-    const res = await fetch(`/api/points/exchange/${itemId}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('兑换成功')
-      fetchUserPoints()
-      fetchExchangeRecords()
-    } else {
-      ElMessage.error(data.message)
-    }
+    await exchangePoints(itemId)
+    ElMessage.success('兑换成功')
+    fetchUserPoints()
+    fetchExchangeRecords()
   } catch (error) {
     ElMessage.error('兑换失败')
+  }
+}
+
+const handlePurchase = async (packageId) => {
+  try {
+    const res = await purchasePoints(packageId)
+    userPoints.value = res.data
+    ElMessage.success('购买成功，积分已到账')
+  } catch (error) {
+    ElMessage.error('购买失败')
   }
 }
 
@@ -264,17 +307,11 @@ const goToPost = (postId) => {
   router.push(`/post/${postId}`)
 }
 
-const deleteComment = async (commentId) => {
+const deleteCommentById = async (commentId) => {
   try {
-    const res = await fetch(`/api/community/api/comment/${commentId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('删除成功')
-      myComments.value = myComments.value.filter(c => c.id !== commentId)
-    }
+    await deleteComment(commentId)
+    ElMessage.success('删除成功')
+    myComments.value = myComments.value.filter(c => c.id !== commentId)
   } catch (error) {
     ElMessage.error('删除失败')
   }
@@ -298,6 +335,9 @@ onMounted(() => {
   fetchUserInfo()
   fetchUserPoints()
   fetchExchangeRecords()
+  fetchMyPosts()
+  fetchMyComments()
+  fetchMyCollections()
 })
 </script>
 
@@ -440,6 +480,12 @@ onMounted(() => {
   color: #409eff;
   font-weight: bold;
   font-size: 20px;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #909399;
 }
 
 .exchange-items {

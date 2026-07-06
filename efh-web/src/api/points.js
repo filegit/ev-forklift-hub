@@ -1,26 +1,17 @@
 import request from '@/utils/request'
 
-// 获取用户积分
 export const getUserPoints = () => {
-  return request({
-    url: '/points',
-    method: 'get'
-  })
+  return request({ url: '/user/api/points', method: 'get' })
 }
 
-// 兑换积分
 export const exchangePoints = (exchangeId) => {
-  return request({
-    url: `/points/exchange/${exchangeId}`,
-    method: 'post'
-  })
+  return request({ url: `/user/api/points/exchange/${exchangeId}`, method: 'post' })
 }
 
-// 获取兑换记录
 export const getExchangeRecords = (params) => {
-  return request({
-    url: '/points/exchanges',
-    method: 'get',
-    params
-  })
+  return request({ url: '/user/api/points/exchanges', method: 'get', params })
+}
+
+export const purchasePoints = (packageId) => {
+  return request({ url: '/user/api/points/purchase', method: 'post', data: { packageId } })
 }

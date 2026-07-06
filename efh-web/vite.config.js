@@ -13,10 +13,12 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
-      }
+      '/user': { target: 'http://localhost:8080', changeOrigin: true },
+      '/community': { target: 'http://localhost:8080', changeOrigin: true },
+      '/parts': { target: 'http://localhost:8080', changeOrigin: true },
+      '/service': { target: 'http://localhost:8080', changeOrigin: true },
+      '/knowledge': { target: 'http://localhost:8080', changeOrigin: true },
+      '/agent': { target: 'http://localhost:8080', changeOrigin: true }
     }
   }
 })

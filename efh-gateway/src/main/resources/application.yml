@@ -26,30 +26,44 @@ spring:
       
       routes:
         - id: efh-user
-          uri: lb://efh-user
+          uri: ${EFH_USER_URI:http://127.0.0.1:8081}
           predicates:
             - Path=/user/**
           filters:
             - StripPrefix=1
 
         - id: efh-community
-          uri: lb://efh-community
+          uri: ${EFH_COMMUNITY_URI:http://127.0.0.1:8082}
           predicates:
             - Path=/community/**
           filters:
             - StripPrefix=1
 
         - id: efh-parts
-          uri: lb://efh-parts
+          uri: ${EFH_PARTS_URI:http://127.0.0.1:8083}
           predicates:
             - Path=/parts/**
           filters:
             - StripPrefix=1
 
         - id: efh-service
-          uri: lb://efh-service
+          uri: ${EFH_SERVICE_URI:http://127.0.0.1:8084}
           predicates:
             - Path=/service/**
+          filters:
+            - StripPrefix=1
+
+        - id: efh-knowledge
+          uri: ${EFH_KNOWLEDGE_URI:http://127.0.0.1:8085}
+          predicates:
+            - Path=/knowledge/**
+          filters:
+            - StripPrefix=1
+
+        - id: efh-agent
+          uri: ${EFH_AGENT_URI:http://127.0.0.1:8086}
+          predicates:
+            - Path=/agent/**
           filters:
             - StripPrefix=1
 

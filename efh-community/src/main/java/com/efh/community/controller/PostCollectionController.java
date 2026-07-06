@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.efh.common.result.Result;
 import com.efh.community.entity.PostCollection;
 import com.efh.community.service.PostCollectionService;
+import com.efh.community.vo.PostCollectionVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -56,16 +57,16 @@ public class PostCollectionController {
      * 获取我的收藏
      */
     @GetMapping("/my")
-    public Result<IPage<PostCollection>> getMyCollections(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
-                                                          @RequestParam(defaultValue = "1") Integer page,
-                                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<IPage<PostCollectionVO>> getMyCollections(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                                                            @RequestParam(defaultValue = "1") Integer page,
+                                                            @RequestParam(defaultValue = "20") Integer size) {
         Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
         
         if (userId == null) {
             return Result.error(401, "未授权");
         }
         
-        IPage<PostCollection> collections = postCollectionService.getUserCollections(userId, new Page<>(page, size));
+        IPage<PostCollectionVO> collections = postCollectionService.getUserCollectionDetails(userId, new Page<>(page, size));
         return Result.success(collections);
     }
 }

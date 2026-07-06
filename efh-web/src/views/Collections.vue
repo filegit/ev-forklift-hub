@@ -36,6 +36,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getMyCollections, collectPost } from '@/api/collection'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -48,14 +49,9 @@ const total = ref(0)
 
 const fetchCollections = async () => {
   try {
-    const res = await fetch(`/api/collection/my?page=${currentPage.value}&size=${pageSize.value}`, {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      collections.value = data.data.records || []
-      total.value = data.data.total || 0
-    }
+    const res = await getMyCollections({ page: currentPage.value, size: pageSize.value })
+    collections.value = res.data.records || []
+    total.value = res.data.total || 0
   } catch (error) {
     ElMessage.error('获取收藏列表失败')
   }
@@ -63,15 +59,10 @@ const fetchCollections = async () => {
 
 const removeCollection = async (id) => {
   try {
-    const res = await fetch(`/api/collection/${collections.value.find(c => c.id === id).postId}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('已取消收藏')
-      fetchCollections()
-    }
+    const postId = collections.value.find(c => c.id === id).postId
+    await collectPost(postId)
+    ElMessage.success('已取消收藏')
+    fetchCollections()
   } catch (error) {
     ElMessage.error('操作失败')
   }

@@ -25,4 +25,9 @@ public interface CommentService extends IService<Comment> {
      * 删除评论
      */
     void deleteComment(Long userId, Long commentId);
+
+    /**
+     * 我的评论
+     */
+    IPage<Comment> getMyComments(Long userId, Page<Comment> page);
 }

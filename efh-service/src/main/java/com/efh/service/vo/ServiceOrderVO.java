@@ -11,7 +11,6 @@ public class ServiceOrderVO {
     @NotNull(message = "服务类型不能为空")
     private Integer serviceType;
     
-    @NotBlank(message = "标题不能为空")
     private String title;
     
     @NotBlank(message = "描述不能为空")

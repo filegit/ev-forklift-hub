@@ -1,0 +1,52 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: efh-agent
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: 6379
+    password: ${REDIS_PASSWORD:123456}
+    database: 4
+
+efh:
+  user:
+    url: ${EFH_USER_URI:http://127.0.0.1:8081}
+  agent:
+    knowledge-upload-dir: ${KNOWLEDGE_UPLOAD_DIR:./uploads/knowledge}
+    max-chunks: 6
+    max-chunk-chars: 900
+    admin-user-type: 9
+    datasource:
+      knowledge:
+        jdbc-url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_knowledge?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: root
+        password: ${MYSQL_PASSWORD:123456}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      community:
+        jdbc-url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_community_0?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: root
+        password: ${MYSQL_PASSWORD:123456}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    llm:
+      enabled: ${LLM_ENABLED:${DASHSCOPE_ENABLED:false}}
+      api-key: ${LLM_API_KEY:${DASHSCOPE_API_KEY:}}
+      base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      model: ${LLM_MODEL:qwen-plus}
+      timeout-ms: 60000
+
+redisson:
+  address: redis://${REDIS_HOST:127.0.0.1}:6379
+  password: ${REDIS_PASSWORD:123456}
+  database: 4
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.efh: debug
