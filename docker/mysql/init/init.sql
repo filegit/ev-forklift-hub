@@ -245,27 +245,27 @@ CREATE DATABASE IF NOT EXISTS `efh_service` DEFAULT CHARACTER SET utf8mb4 COLLAT
 
 USE `efh_service`;
 
--- 维修工单表
+-- 维修工单表（与 ServiceOrder 实体字段一致）
 CREATE TABLE IF NOT EXISTS `service_order` (
-  `id` BIGINT NOT NULL COMMENT '工单ID',
-  `order_no` VARCHAR(50) NOT NULL COMMENT '工单号',
-  `user_id` BIGINT NOT NULL COMMENT '用户ID',
-  `forklift_model` VARCHAR(100) DEFAULT NULL COMMENT '叉车型号',
-  `problem_desc` TEXT NOT NULL COMMENT '问题描述',
-  `images` TEXT DEFAULT NULL COMMENT '图片URL列表（JSON）',
-  `address` VARCHAR(200) DEFAULT NULL COMMENT '地址',
-  `contact_phone` VARCHAR(20) DEFAULT NULL COMMENT '联系电话',
-  `technician_id` BIGINT DEFAULT NULL COMMENT '维修师傅ID',
-  `status` TINYINT DEFAULT 1 COMMENT '状态：1-待分配，2-已分配，3-维修中，4-已完成，5-已取消',
-  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `finish_time` DATETIME DEFAULT NULL COMMENT '完成时间',
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `order_no` VARCHAR(50) NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  `technician_id` BIGINT DEFAULT NULL,
+  `service_type` TINYINT DEFAULT 1,
+  `title` VARCHAR(100) DEFAULT NULL,
+  `description` TEXT,
+  `images` TEXT DEFAULT NULL,
+  `address` VARCHAR(200) DEFAULT NULL,
+  `phone` VARCHAR(20) DEFAULT NULL,
+  `status` TINYINT DEFAULT 0 COMMENT '0待处理 1已接单 2服务中 3已完成 4已取消',
+  `feedback` VARCHAR(500) DEFAULT NULL,
+  `rating` TINYINT DEFAULT NULL,
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
-  KEY `idx_user_id` (`user_id`),
-  KEY `idx_technician_id` (`technician_id`),
-  KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='维修工单表';
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='维修工单';
 
 -- 维修师傅表
 CREATE TABLE IF NOT EXISTS `technician` (

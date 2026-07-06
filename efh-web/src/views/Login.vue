@@ -107,4 +107,18 @@ const handleLogin = async () => {
   color: #409eff;
   text-decoration: none;
 }
+
+@media (max-width: 768px) {
+  .login-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 12vh;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
+}
 </style>

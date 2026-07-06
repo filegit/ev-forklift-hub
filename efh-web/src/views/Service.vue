@@ -40,21 +40,21 @@
         <el-tab-pane label="服务介绍" name="intro">
           <div class="service-intro">
             <el-row :gutter="20">
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="hover">
                   <h3>故障诊断</h3>
                   <p>专业技师上门诊断叉车故障，快速定位问题</p>
                   <div class="price">¥200 起</div>
                 </el-card>
               </el-col>
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="hover">
                   <h3>维修保养</h3>
                   <p>定期保养维护，延长叉车使用寿命</p>
                   <div class="price">¥500 起</div>
                 </el-card>
               </el-col>
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="hover">
                   <h3>紧急救援</h3>
                   <p>24小时紧急救援服务，快速响应</p>

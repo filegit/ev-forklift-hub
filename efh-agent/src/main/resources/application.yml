@@ -18,6 +18,9 @@ efh:
     max-chunks: 6
     max-chunk-chars: 900
     admin-user-type: 9
+    short-term-max-messages: 20
+    context-token-limit: 3000
+    session-lock-seconds: 5
     datasource:
       knowledge:
         jdbc-url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_knowledge?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
@@ -29,12 +32,37 @@ efh:
         username: root
         password: ${MYSQL_PASSWORD:123456}
         driver-class-name: com.mysql.cj.jdbc.Driver
+      agent:
+        jdbc-url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/efh_agent?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: root
+        password: ${MYSQL_PASSWORD:123456}
+        driver-class-name: com.mysql.cj.jdbc.Driver
     llm:
       enabled: ${LLM_ENABLED:${DASHSCOPE_ENABLED:false}}
       api-key: ${LLM_API_KEY:${DASHSCOPE_API_KEY:}}
       base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
       model: ${LLM_MODEL:qwen-plus}
-      timeout-ms: 60000
+      embedding-model: text-embedding-v3
+      timeout-ms: 120000
+      prompt-cost-per-1k: 0.002
+      completion-cost-per-1k: 0.006
+    rag:
+      min-similarity-threshold: 0.25
+      rerank-top-k: 6
+      keyword-weight: 0.4
+      vector-weight: 0.6
+      min-grounding-overlap: 0.08
+    security:
+      prompt-guard-enabled: true
+      max-requests-per-minute: 30
+      blocked-tools: shell_exec,sql_write,delete_data
+    monitor:
+      log-enabled: true
+      metrics-enabled: true
+    vector:
+      enabled: true
+      dimension: 128
+      index-batch-size: 50
 
 redisson:
   address: redis://${REDIS_HOST:127.0.0.1}:6379
@@ -45,7 +73,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
 
 logging:
   level:

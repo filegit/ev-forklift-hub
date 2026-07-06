@@ -86,7 +86,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // Agent 问答：可选认证（未登录仅检索免费资料与公开社区）
-        if ("POST".equals(request.getMethod().name()) && path.equals("/agent/api/agent/chat")) {
+        if ("POST".equals(request.getMethod().name()) && (path.equals("/agent/api/agent/chat") || path.equals("/agent/api/agent/chat/stream"))) {
+            return passWithOptionalAuth(exchange, chain);
+        }
+
+        // Agent 监控指标公开
+        if ("GET".equals(request.getMethod().name()) && path.equals("/agent/api/agent/metrics")) {
             return passWithOptionalAuth(exchange, chain);
         }
 

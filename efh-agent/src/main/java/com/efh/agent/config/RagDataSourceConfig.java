@@ -33,4 +33,15 @@ public class RagDataSourceConfig {
     public JdbcTemplate communityJdbcTemplate(@Qualifier("communityDataSource") DataSource communityDataSource) {
         return new JdbcTemplate(communityDataSource);
     }
+
+    @Bean(name = "agentDataSource")
+    @ConfigurationProperties(prefix = "efh.agent.datasource.agent")
+    public DataSource agentDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    @Bean
+    public JdbcTemplate agentJdbcTemplate(@Qualifier("agentDataSource") DataSource agentDataSource) {
+        return new JdbcTemplate(agentDataSource);
+    }
 }

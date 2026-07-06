@@ -10,4 +10,5 @@ public class ChatSourceVO {
     private String snippet;
     private boolean unlocked;
     private String link;
+    private double score;
 }

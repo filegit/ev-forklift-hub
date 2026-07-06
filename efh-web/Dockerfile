@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:18-alpine as build-stage
+FROM node:18 as build-stage
 
 WORKDIR /app
 
@@ -9,14 +9,15 @@ RUN npm config set registry https://registry.npmmirror.com
 # 复制 package.json 和 package-lock.json
 COPY package*.json ./
 
-# 安装依赖
-RUN npm install
+# 安装依赖（Alpine 下需完整安装 devDependencies 才能 vite build）
+RUN npm install --registry=https://registry.npmmirror.com --legacy-peer-deps \
+    && test -f node_modules/.bin/vite
 
 # 复制项目文件
 COPY . .
 
 # 构建项目
-RUN npm run build
+RUN npx vite build
 
 # 生产阶段
 FROM nginx:alpine as production-stage

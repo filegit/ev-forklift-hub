@@ -2,10 +2,10 @@
   <div class="detail-page" v-loading="loading">
     <el-card v-if="part">
       <el-row :gutter="30">
-        <el-col :span="10">
+        <el-col :xs="24" :md="10">
           <img :src="mainImage" class="main-image" />
         </el-col>
-        <el-col :span="14">
+        <el-col :xs="24" :md="14">
           <h2>{{ part.name }}</h2>
           <p class="desc">{{ part.description }}</p>
           <div class="tags">
@@ -98,5 +98,11 @@ onMounted(async () => {
 .price { color: #f56c6c; font-size: 28px; font-weight: bold; }
 .stock-row { display: flex; gap: 24px; color: #606266; margin-bottom: 20px; }
 .qty-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.actions { display: flex; gap: 16px; }
+.actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .main-image { margin-bottom: 16px; }
+  .actions .el-button { flex: 1; min-width: 140px; }
+  .price { font-size: 24px; }
+}
 </style>

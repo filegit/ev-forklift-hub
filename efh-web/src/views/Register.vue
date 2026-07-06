@@ -130,4 +130,18 @@ const handleRegister = async () => {
   color: #409eff;
   text-decoration: none;
 }
+
+@media (max-width: 768px) {
+  .register-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 8vh;
+  }
+
+  .register-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
+}
 </style>

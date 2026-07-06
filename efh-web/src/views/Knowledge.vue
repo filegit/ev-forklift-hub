@@ -10,14 +10,14 @@
 
     <el-card class="filter-card">
       <el-row :gutter="16" align="middle">
-        <el-col :span="10">
+        <el-col :xs="24" :sm="10">
           <el-input v-model="keyword" placeholder="搜索文档标题、摘要..." clearable @keyup.enter="fetchList">
             <template #append>
               <el-button @click="fetchList">搜索</el-button>
             </template>
           </el-input>
         </el-col>
-        <el-col :span="14">
+        <el-col :xs="24" :sm="14">
           <el-radio-group v-model="category" @change="fetchList">
             <el-radio-button label="">全部</el-radio-button>
             <el-radio-button v-for="c in categories" :key="c" :label="c">{{ c }}</el-radio-button>
@@ -27,7 +27,7 @@
     </el-card>
 
     <el-row :gutter="20" v-loading="loading">
-      <el-col :span="8" v-for="doc in docList" :key="doc.id">
+      <el-col :xs="24" :sm="12" :md="8" v-for="doc in docList" :key="doc.id">
         <el-card class="doc-card" shadow="hover" @click="goDetail(doc.id)">
           <div class="doc-icon">
             <el-icon :size="40"><Document /></el-icon>

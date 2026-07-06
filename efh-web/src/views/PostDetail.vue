@@ -404,4 +404,35 @@ onMounted(() => {
   line-height: 1.6;
   margin-left: 50px;
 }
+
+@media (max-width: 768px) {
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .post-title {
+    font-size: 20px;
+  }
+
+  .post-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .post-actions {
+    flex-wrap: wrap;
+  }
+
+  .post-actions .el-button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .comment-content {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
 </style>

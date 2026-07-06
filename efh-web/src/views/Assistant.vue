@@ -78,6 +78,7 @@ import { ElMessage } from 'element-plus'
 import { sendChat } from '@/api/agent'
 
 const router = useRouter()
+const sessionId = ref(localStorage.getItem('agent_session_id') || '')
 const question = ref('')
 const scope = ref('all')
 const loading = ref(false)
@@ -138,7 +139,11 @@ const handleSend = async () => {
   await scrollToBottom()
 
   try {
-    const res = await sendChat({ question: q, scope: scope.value })
+    const res = await sendChat({ question: q, scope: scope.value, sessionId: sessionId.value || undefined })
+    if (res.data.sessionId) {
+      sessionId.value = res.data.sessionId
+      localStorage.setItem('agent_session_id', res.data.sessionId)
+    }
     messages.value.push({
       role: 'assistant',
       content: res.data.answer,
@@ -298,5 +303,39 @@ const handleSend = async () => {
 
 .chat-input .el-textarea {
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .assistant-page {
+    margin: 0 -4px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chat-body {
+    min-height: 50vh;
+    max-height: none;
+    padding: 12px;
+  }
+
+  .bubble {
+    max-width: 92%;
+  }
+
+  .chat-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chat-input .el-button {
+    width: 100%;
+  }
+
+  .welcome {
+    padding: 24px 12px;
+  }
 }
 </style>

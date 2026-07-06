@@ -1,0 +1,203 @@
+/* 移动端全局适配 */
+:root {
+  --efh-tabbar-height: 56px;
+  --efh-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
+  overflow-x: hidden;
+  margin: 0;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* 桌面 / 移动 显隐（不依赖 JS） */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .mobile-only.block {
+    display: block !important;
+  }
+
+  /* ========== 主布局 ========== */
+  .main-layout .header {
+    height: 52px !important;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+  }
+
+  .main-layout .header-content {
+    height: 52px;
+    padding: 0 10px;
+    max-width: none;
+    width: 100%;
+  }
+
+  .main-layout .logo {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .main-layout .logo-text {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(160px, 42vw);
+  }
+
+  .main-layout .mobile-header-actions {
+    flex-shrink: 0;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .main-layout .main-content {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    padding-bottom: calc(var(--efh-tabbar-height) + var(--efh-safe-bottom) + 10px) !important;
+  }
+
+  .main-layout .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex !important;
+    background: #fff;
+    border-top: 1px solid #ebeef5;
+    padding-bottom: var(--efh-safe-bottom);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+    height: var(--efh-tabbar-height);
+  }
+
+  .main-layout .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 0;
+    border: none;
+    background: transparent;
+    color: #909399;
+    font-size: 11px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .main-layout .tab-item .el-icon {
+    font-size: 22px;
+  }
+
+  .main-layout .tab-item.active {
+    color: #409eff;
+  }
+
+  /* Element Plus 对话框 / 抽屉 */
+  .el-dialog {
+    width: 92% !important;
+    max-width: 92vw !important;
+    margin: 8vh auto !important;
+  }
+
+  .el-message-box {
+    width: 88% !important;
+    max-width: 88vw !important;
+  }
+
+  /* 分页精简 */
+  .el-pagination .el-pagination__total,
+  .el-pagination .el-pagination__sizes,
+  .el-pagination .el-pagination__jump {
+    display: none !important;
+  }
+
+  .el-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  /* 分类筛选横向滚动 */
+  .el-radio-group {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .el-radio-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .el-radio-button__inner {
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+
+  /* 卡片内边距缩小 */
+  .el-card {
+    --el-card-padding: 12px;
+  }
+
+  .el-card__body {
+    overflow-x: auto;
+  }
+
+  .el-table {
+    min-width: 560px;
+  }
+
+  .el-form--label-right .el-form-item__label {
+    float: none;
+    display: block;
+    text-align: left;
+    padding-bottom: 4px;
+  }
+
+  .el-form-item__content {
+    margin-left: 0 !important;
+  }
+
+  .el-descriptions__body .el-descriptions__table {
+    display: block;
+  }
+
+  .el-descriptions__cell {
+    display: block;
+    width: 100% !important;
+  }
+
+  .el-button {
+    min-height: 36px;
+  }
+
+  .el-button--small {
+    min-height: 32px;
+  }
+}

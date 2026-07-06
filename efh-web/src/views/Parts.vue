@@ -1,8 +1,15 @@
 <template>
   <div class="parts-page">
+    <div class="page-header">
+      <h2>配件商城</h2>
+      <el-button v-if="canManage" type="primary" @click="$router.push('/parts/admin')">
+        配件管理
+      </el-button>
+    </div>
+
     <el-card class="search-card">
       <el-row :gutter="16" align="middle">
-        <el-col :span="10">
+        <el-col :xs="24" :sm="10">
           <el-input
             v-model="keyword"
             placeholder="搜索配件名称、描述..."
@@ -14,7 +21,7 @@
             </template>
           </el-input>
         </el-col>
-        <el-col :span="14">
+        <el-col :xs="24" :sm="14">
           <el-radio-group v-model="category" @change="handleSearch">
             <el-radio-button label="">全部</el-radio-button>
             <el-radio-button label="电池">电池</el-radio-button>
@@ -28,7 +35,7 @@
     </el-card>
 
     <el-row :gutter="20" v-loading="loading">
-      <el-col :span="6" v-for="part in partsList" :key="part.id">
+      <el-col :xs="12" :sm="8" :md="6" v-for="part in partsList" :key="part.id">
         <el-card class="part-card" shadow="hover" @click="goDetail(part.id)">
           <img :src="getImage(part.images)" class="part-image" />
           <div class="part-info">
@@ -62,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getPartsList, addToCart } from '@/api/parts'
@@ -77,6 +84,11 @@ const pageSize = ref(12)
 const total = ref(0)
 const keyword = ref('')
 const category = ref('')
+
+const canManage = computed(() => {
+  const t = userStore.userInfo?.userType
+  return t === 3 || t === 9
+})
 
 const getImage = (images) => {
   if (!images) return 'https://via.placeholder.com/300x200?text=Parts'
@@ -120,11 +132,22 @@ const handleAddCart = async (part) => {
   }
 }
 
-onMounted(fetchPartsList)
+onMounted(async () => {
+  if (userStore.token && !userStore.userInfo) {
+    try {
+      await userStore.fetchUserInfo()
+    } catch (e) {
+      /* ignore */
+    }
+  }
+  fetchPartsList()
+})
 </script>
 
 <style scoped>
 .parts-page { max-width: 1200px; margin: 0 auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.page-header h2 { margin: 0; font-size: 20px; }
 .search-card { margin-bottom: 20px; }
 .part-card { margin-bottom: 20px; cursor: pointer; }
 .part-image { width: 100%; height: 180px; object-fit: cover; border-radius: 4px; }
@@ -135,4 +158,9 @@ onMounted(fetchPartsList)
 .part-footer { display: flex; justify-content: space-between; align-items: center; }
 .price { color: #f56c6c; font-size: 18px; font-weight: bold; }
 .pagination { margin-top: 20px; display: flex; justify-content: center; }
+
+@media (max-width: 768px) {
+  .search-card :deep(.el-col) { margin-bottom: 12px; }
+  .part-image { height: 140px; }
+}
 </style>

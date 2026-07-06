@@ -114,10 +114,15 @@ onMounted(() => {
 .home {
   max-width: 900px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .filter-card {
   margin-bottom: 20px;
+}
+
+.filter-card :deep(.el-card__body) {
+  padding: 12px;
 }
 
 .post-list {
@@ -187,5 +192,39 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .filter-card {
+    margin-bottom: 12px;
+  }
+
+  .filter-card :deep(.el-radio-group) {
+    margin-top: 8px;
+  }
+
+  .post-item {
+    padding: 14px 12px;
+  }
+
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .post-title {
+    font-size: 16px;
+  }
+
+  .post-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .post-stats {
+    gap: 12px;
+  }
 }
 </style>

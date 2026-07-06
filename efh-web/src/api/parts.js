@@ -4,6 +4,10 @@ export const getPartsList = (params) => {
   return request({ url: '/parts/api/parts/list', method: 'get', params })
 }
 
+export const publishParts = (data) => {
+  return request({ url: '/parts/api/parts', method: 'post', data })
+}
+
 export const getPartsDetail = (id) => {
   return request({ url: `/parts/api/parts/${id}`, method: 'get' })
 }

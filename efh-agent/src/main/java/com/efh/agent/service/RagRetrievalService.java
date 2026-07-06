@@ -55,8 +55,12 @@ public class RagRetrievalService {
         }
 
         chunks.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
-        return chunks.stream().limit(agentProperties.getMaxChunks()).collect(Collectors.toList());
+        List<RagChunk> limited = chunks.stream().limit(agentProperties.getMaxChunks() * 2).collect(Collectors.toList());
+        return rerankService.rerankAndFilter(question, limited);
     }
+
+    @Autowired
+    private com.efh.agent.service.rag.RerankService rerankService;
 
     private List<RagChunk> searchKnowledge(List<String> keywords, Long userId) {
         List<Map<String, Object>> docs = knowledgeJdbc.queryForList(

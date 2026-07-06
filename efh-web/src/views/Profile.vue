@@ -524,4 +524,24 @@ onMounted(() => {
   color: #409eff;
   font-weight: bold;
 }
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-header .el-button {
+    width: 100%;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .exchange-items {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
