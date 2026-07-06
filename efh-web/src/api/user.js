@@ -9,6 +9,15 @@ export const login = (data) => {
   })
 }
 
+// 发送登录短信验证码
+export const sendLoginSms = (data) => {
+  return request({
+    url: '/user/api/sms/login',
+    method: 'post',
+    data
+  })
+}
+
 // 用户注册
 export const register = (data) => {
   return request({

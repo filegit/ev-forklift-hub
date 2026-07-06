@@ -6,6 +6,7 @@ import com.efh.common.exception.BusinessException;
 import com.efh.common.utils.JwtUtil;
 import com.efh.user.entity.User;
 import com.efh.user.mapper.UserMapper;
+import com.efh.user.service.SmsService;
 import com.efh.user.service.UserService;
 import com.efh.user.vo.LoginVO;
 import com.efh.user.vo.RegisterVO;
@@ -28,6 +29,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private SmsService smsService;
 
     // BCrypt 密码加密器
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -142,10 +146,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户名或密码错误");
         }
 
+        smsService.verifyLoginCode(vo.getUsername(), vo.getSmsCode());
+
         log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
 
         // 6. 生成并返回 JWT Token
         return JwtUtil.generateToken(user.getId(), user.getUsername());
+    }
+
+    @Override
+    public String sendLoginSmsCode(String username) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
+        User user = this.getOne(wrapper);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new BusinessException("账号已被禁用");
+        }
+        return smsService.sendLoginCode(user);
     }
 
     /**

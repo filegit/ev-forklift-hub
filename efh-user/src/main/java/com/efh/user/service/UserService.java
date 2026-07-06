@@ -17,6 +17,12 @@ public interface UserService extends IService<User> {
      * 用户登录
      */
     String login(LoginVO loginVO);
+
+    /**
+     * 发送登录短信验证码
+     * @return 演示模式下的验证码（便于测试）
+     */
+    String sendLoginSmsCode(String username);
     
     /**
      * 获取用户信息

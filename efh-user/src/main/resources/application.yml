@@ -81,3 +81,9 @@ logging:
   level:
     com.efh: debug
     org.apache.shardingsphere: info
+
+efh:
+  sms:
+    mock: true
+    code-expire-seconds: 300
+    send-interval-seconds: 60

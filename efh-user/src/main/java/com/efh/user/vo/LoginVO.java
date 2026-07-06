@@ -12,4 +12,7 @@ public class LoginVO {
     
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    @NotBlank(message = "短信验证码不能为空")
+    private String smsCode;
 }

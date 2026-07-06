@@ -6,6 +6,7 @@ import com.efh.user.entity.User;
 import com.efh.user.service.UserService;
 import com.efh.user.vo.LoginVO;
 import com.efh.user.vo.RegisterVO;
+import com.efh.user.vo.SendLoginSmsVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -97,6 +98,26 @@ public class UserController {
         data.put("token", token);
         
         log.info("用户登录成功: username={}", loginVO.getUsername());
+        return Result.success(data);
+    }
+
+    /**
+     * 发送登录短信验证码
+     *
+     * POST /user/api/sms/login
+     * { "username": "admin" }
+     */
+    @PostMapping("/sms/login")
+    public Result<Map<String, String>> sendLoginSms(@Validated @RequestBody SendLoginSmsVO vo) {
+        log.info("发送登录验证码: username={}", vo.getUsername());
+        String mockCode = userService.sendLoginSmsCode(vo.getUsername());
+        Map<String, String> data = new HashMap<>();
+        if (mockCode != null) {
+            data.put("mockCode", mockCode);
+            data.put("message", "演示模式：验证码为 " + mockCode);
+        } else {
+            data.put("message", "验证码已发送");
+        }
         return Result.success(data);
     }
     
