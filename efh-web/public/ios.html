@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="叉车智联中台">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>iPhone 使用叉车智联中台</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f4f7f6;
+      color: #17211f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    .page {
+      width: min(720px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #edf2f0;
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .kicker {
+      color: #0f766e;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 8px 0 10px;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #5f6f6b;
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .btn {
+      display: block;
+      padding: 13px 16px;
+      border-radius: 8px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      color: #fff;
+      background: #0f766e;
+    }
+
+    .secondary {
+      color: #0f766e;
+      border: 1px solid #0f766e;
+      background: #fff;
+    }
+
+    ol {
+      margin: 16px 0 0;
+      padding-left: 22px;
+      color: #17211f;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .note {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #e6fffb;
+      color: #115e59;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel">
+      <span class="kicker">IOS ACCESS</span>
+      <h1>iPhone 打开使用</h1>
+      <p>当前 iOS 版本提供免安装网页 App 入口，可以联网使用完整系统。正式 IPA 需要 Apple 签名后才能安装。</p>
+
+      <div class="actions">
+        <a class="btn primary" href="/">打开系统</a>
+        <a class="btn secondary" href="/manifest.webmanifest">查看应用配置</a>
+      </div>
+
+      <h2>添加到主屏幕</h2>
+      <ol>
+        <li>用 Safari 打开本页。</li>
+        <li>点击底部分享按钮。</li>
+        <li>选择“添加到主屏幕”。</li>
+        <li>以后从桌面图标进入即可使用。</li>
+      </ol>
+
+      <div class="note">服务器地址：111.170.36.78:8888。若页面打不开，请先确认手机网络可以访问该地址。</div>
+    </section>
+  </main>
+</body>
+</html>

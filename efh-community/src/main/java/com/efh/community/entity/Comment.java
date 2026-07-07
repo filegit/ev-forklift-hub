@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("comment_0")  // 暂时使用单表
+@TableName("comment_0")
 public class Comment extends BaseEntity {
     
     private Long postId;      // 帖子ID

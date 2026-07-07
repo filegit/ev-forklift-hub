@@ -4,10 +4,9 @@
       <div class="header-content">
         <div class="logo" @click="$router.push('/')">
           <el-icon :size="22"><Van /></el-icon>
-          <span class="logo-text">电叉协同平台</span>
+          <span class="logo-text">{{ t('common.appName') }}</span>
         </div>
 
-        <!-- 桌面端导航 -->
         <el-menu
           mode="horizontal"
           :default-active="activeMenu"
@@ -15,51 +14,55 @@
           router
           @select="handleMenuSelect"
         >
-          <el-menu-item index="/">运营社区</el-menu-item>
-          <el-menu-item index="/parts">备件采购</el-menu-item>
-          <el-menu-item index="/knowledge">知识库</el-menu-item>
-          <el-menu-item index="/assistant">AI助手</el-menu-item>
-          <el-menu-item index="/service">维保工单</el-menu-item>
+          <el-menu-item v-for="item in navItems" :key="item.path" :index="item.path">
+            {{ item.label }}
+          </el-menu-item>
         </el-menu>
 
-        <!-- 桌面端操作区 -->
         <div class="user-actions desktop-only">
+          <el-button class="lang-switch" plain @click="toggleLocale">
+            <el-icon><Switch /></el-icon>
+            {{ nextLocaleLabel }}
+          </el-button>
+
           <el-badge :value="cartCount" :hidden="!cartCount" :max="99" class="cart-badge">
-            <el-button @click="$router.push('/cart')" v-if="userStore.token">
+            <el-button v-if="userStore.token" @click="$router.push('/cart')">
               <el-icon><ShoppingCart /></el-icon>
-              采购车
+              {{ t('common.cart') }}
             </el-button>
           </el-badge>
-          <el-button type="primary" @click="showPostDialog = true" v-if="userStore.token">
+
+          <el-button v-if="userStore.token" type="primary" @click="showPostDialog = true">
             <el-icon><Edit /></el-icon>
-            发帖
+            {{ t('common.publish') }}
           </el-button>
+
           <template v-if="userStore.token">
             <el-dropdown @command="handleCommand">
               <span class="user-info">
-                <el-avatar :size="32">{{ userStore.userInfo?.nickname?.charAt(0) }}</el-avatar>
-                <span class="username">{{ userStore.userInfo?.nickname }}</span>
+                <el-avatar :size="32">{{ userStore.userInfo?.nickname?.charAt(0) || 'U' }}</el-avatar>
+                <span class="username">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                  <el-dropdown-item command="orders">我的订单</el-dropdown-item>
-                  <el-dropdown-item command="collections">我的收藏</el-dropdown-item>
-                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile">{{ t('common.profile') }}</el-dropdown-item>
+                  <el-dropdown-item command="orders">{{ t('common.orders') }}</el-dropdown-item>
+                  <el-dropdown-item command="collections">{{ t('common.collections') }}</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>{{ t('common.logout') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
           <template v-else>
-            <el-button @click="$router.push('/login')">登录</el-button>
-            <el-button type="primary" @click="$router.push('/register')">注册</el-button>
+            <el-button @click="$router.push('/login')">{{ t('common.login') }}</el-button>
+            <el-button type="primary" @click="$router.push('/register')">{{ t('common.register') }}</el-button>
           </template>
         </div>
 
-        <!-- 移动端顶栏操作 -->
         <div class="user-actions mobile-only mobile-header-actions">
+          <el-button class="mobile-lang" circle plain @click="toggleLocale">{{ nextLocaleLabel }}</el-button>
           <el-badge :value="cartCount" :hidden="!cartCount" :max="99">
-            <el-button circle @click="$router.push('/cart')" v-if="userStore.token">
+            <el-button v-if="userStore.token" circle @click="$router.push('/cart')">
               <el-icon><ShoppingCart /></el-icon>
             </el-button>
           </el-badge>
@@ -72,7 +75,6 @@
       <router-view />
     </el-main>
 
-    <!-- 移动端底部导航（结算/支付页隐藏） -->
     <nav v-if="!hideTabBar" class="mobile-tabbar mobile-only">
       <button
         v-for="tab in tabItems"
@@ -91,77 +93,75 @@
       v-model="drawerOpen"
       direction="rtl"
       :size="280"
-      title="菜单"
+      :title="t('common.menu')"
       class="mobile-drawer"
     >
       <div v-if="userStore.token" class="drawer-user">
-        <el-avatar :size="48">{{ userStore.userInfo?.nickname?.charAt(0) }}</el-avatar>
+        <el-avatar :size="48">{{ userStore.userInfo?.nickname?.charAt(0) || 'U' }}</el-avatar>
         <div>
-          <div class="drawer-nickname">{{ userStore.userInfo?.nickname }}</div>
+          <div class="drawer-nickname">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</div>
           <div class="drawer-username">{{ userStore.userInfo?.username }}</div>
         </div>
       </div>
 
       <el-menu :default-active="activeMenu" router @select="onDrawerSelect">
-        <el-menu-item index="/">运营社区</el-menu-item>
-        <el-menu-item index="/parts">备件采购</el-menu-item>
-        <el-menu-item index="/knowledge">知识库</el-menu-item>
-        <el-menu-item index="/assistant">AI 助手</el-menu-item>
-        <el-menu-item index="/service">维保工单</el-menu-item>
-        <el-menu-item v-if="userStore.token" index="/orders">我的订单</el-menu-item>
-        <el-menu-item v-if="userStore.token" index="/collections">我的收藏</el-menu-item>
-        <el-menu-item v-if="userStore.token" index="/profile">个人中心</el-menu-item>
+        <el-menu-item v-for="item in navItems" :key="item.path" :index="item.path">{{ item.label }}</el-menu-item>
+        <el-menu-item v-if="userStore.token" index="/orders">{{ t('common.orders') }}</el-menu-item>
+        <el-menu-item v-if="userStore.token" index="/collections">{{ t('common.collections') }}</el-menu-item>
+        <el-menu-item v-if="userStore.token" index="/profile">{{ t('common.profile') }}</el-menu-item>
       </el-menu>
 
       <div class="drawer-actions">
         <el-button v-if="userStore.token" type="primary" style="width: 100%" @click="openPostDialog">
           <el-icon><Edit /></el-icon>
-          发布帖子
+          {{ t('common.publishPost') }}
         </el-button>
         <el-button
           v-if="userStore.token"
           style="width: 100%; margin-top: 10px; margin-left: 0"
           @click="handleCommand('logout')"
         >
-          退出登录
+          {{ t('common.logout') }}
         </el-button>
         <template v-else>
-          <el-button type="primary" style="width: 100%" @click="goAuth('/login')">登录</el-button>
-          <el-button style="width: 100%; margin-top: 10px; margin-left: 0" @click="goAuth('/register')">注册</el-button>
+          <el-button type="primary" style="width: 100%" @click="goAuth('/login')">{{ t('common.login') }}</el-button>
+          <el-button style="width: 100%; margin-top: 10px; margin-left: 0" @click="goAuth('/register')">
+            {{ t('common.register') }}
+          </el-button>
         </template>
       </div>
     </el-drawer>
 
     <el-dialog
       v-model="showPostDialog"
-      title="发布帖子"
+      :title="t('common.publishPost')"
       :width="dialogWidth"
       :fullscreen="isMobile"
     >
       <el-form :model="postForm" label-position="top">
-        <el-form-item label="标题">
-          <el-input v-model="postForm.title" placeholder="请输入帖子标题" />
+        <el-form-item :label="t('post.title')">
+          <el-input v-model="postForm.title" :placeholder="t('post.titlePlaceholder')" />
         </el-form-item>
-        <el-form-item label="分类">
-          <el-select v-model="postForm.category" placeholder="请选择分类" style="width: 100%">
-            <el-option label="技术交流" :value="1" />
-            <el-option label="故障求助" :value="2" />
-            <el-option label="经验分享" :value="3" />
-            <el-option label="其他" :value="4" />
+        <el-form-item :label="t('post.category')">
+          <el-select v-model="postForm.category" :placeholder="t('post.category')" style="width: 100%">
+            <el-option :label="t('post.tech')" :value="1" />
+            <el-option :label="t('post.trouble')" :value="2" />
+            <el-option :label="t('post.experience')" :value="3" />
+            <el-option :label="t('post.other')" :value="4" />
           </el-select>
         </el-form-item>
-        <el-form-item label="内容">
+        <el-form-item :label="t('post.content')">
           <el-input
             v-model="postForm.content"
             type="textarea"
             :rows="isMobile ? 10 : 8"
-            placeholder="请输入帖子内容"
+            :placeholder="t('post.contentPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showPostDialog = false">取消</el-button>
-        <el-button type="primary" @click="handlePublishPost">发布</el-button>
+        <el-button @click="showPostDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handlePublishPost">{{ t('common.publish') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -174,13 +174,15 @@ import { useUserStore } from '@/stores/user'
 import { createPost } from '@/api/post'
 import { getCartCount } from '@/api/parts'
 import { ElMessage } from 'element-plus'
-import { Menu, House, ShoppingBag, Reading, ChatDotRound, User } from '@element-plus/icons-vue'
+import { Menu, House, ShoppingBag, Reading, ChatDotRound, User, Switch, Van, ShoppingCart, Edit } from '@element-plus/icons-vue'
 import { useMobile } from '@/composables/useMobile'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const { isMobile } = useMobile()
+const { t, toggleLocale, nextLocaleLabel } = useI18n()
 
 const dialogWidth = computed(() => (isMobile.value ? '92%' : '600px'))
 
@@ -199,13 +201,21 @@ const activeMenu = computed(() => {
   return route.path
 })
 
-const tabItems = [
-  { path: '/', label: '首页', icon: House },
-  { path: '/parts', label: '备件', icon: ShoppingBag },
-  { path: '/knowledge', label: '知识库', icon: Reading },
+const navItems = computed(() => [
+  { path: '/', label: t('common.community') },
+  { path: '/parts', label: t('common.parts') },
+  { path: '/knowledge', label: t('common.knowledge') },
+  { path: '/assistant', label: t('common.assistant') },
+  { path: '/service', label: t('common.service') }
+])
+
+const tabItems = computed(() => [
+  { path: '/', label: t('common.home'), icon: House },
+  { path: '/parts', label: t('common.parts'), icon: ShoppingBag },
+  { path: '/knowledge', label: t('common.knowledge'), icon: Reading },
   { path: '/assistant', label: 'AI', icon: ChatDotRound },
-  { path: '/profile', label: '我的', icon: User }
-]
+  { path: '/profile', label: t('common.mine'), icon: User }
+])
 
 const showPostDialog = ref(false)
 const cartCount = ref(0)
@@ -237,7 +247,7 @@ const handleCommand = (command) => {
   if (command === 'logout') {
     userStore.logout()
     router.push('/login')
-    ElMessage.success('退出成功')
+    ElMessage.success(t('post.logoutSuccess'))
   } else if (command === 'profile') {
     router.push('/profile')
   } else if (command === 'orders') {
@@ -249,16 +259,16 @@ const handleCommand = (command) => {
 
 const handlePublishPost = async () => {
   if (!postForm.value.title) {
-    ElMessage.warning('请输入标题')
+    ElMessage.warning(t('post.titleRequired'))
     return
   }
   if (!postForm.value.content) {
-    ElMessage.warning('请输入内容')
+    ElMessage.warning(t('post.contentRequired'))
     return
   }
   try {
     await createPost(postForm.value)
-    ElMessage.success('发布成功')
+    ElMessage.success(t('post.publishSuccess'))
     showPostDialog.value = false
     postForm.value = { title: '', content: '', category: 1 }
     router.push('/')
@@ -356,13 +366,23 @@ onMounted(loadCartCount)
   flex-shrink: 0;
 }
 
+.lang-switch {
+  min-width: 72px;
+}
+
+.mobile-lang {
+  width: 36px;
+  font-size: 12px;
+  padding: 0;
+}
+
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: background 0.2s;
 }
 
@@ -422,7 +442,6 @@ onMounted(loadCartCount)
   flex: 1;
 }
 
-/* el-menu 是 flex 子项，桌面端需占满中间区域 */
 .main-layout .nav-menu.desktop-only {
   display: flex;
   flex: 1;

@@ -37,6 +37,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/user/api/login",
+            "/user/api/login/sms",
             "/user/api/register",
             "/user/api/sms/login",
             "/community/api/post/list",
@@ -82,7 +83,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
 
         // 知识库文档详情公开预览
-        if ("GET".equals(request.getMethod().name()) && path.matches("/knowledge/api/knowledge/doc/\\d+")) {
+        if ("GET".equals(request.getMethod().name()) && path.matches("/knowledge/api/knowledge/doc/\\d+(/(preview|download))?")) {
             return passWithOptionalAuth(exchange, chain);
         }
 

@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { apiUrl } from '@/utils/apiBase'
 
 export const sendChat = (data) => {
   return request({
@@ -14,7 +15,7 @@ export const sendChatStream = (data, onDelta, onDone, onError) => {
   const userStore = JSON.parse(localStorage.getItem('user') || '{}')
   const token = userStore?.token
   const controller = new AbortController()
-  fetch('/agent/api/agent/chat/stream', {
+  fetch(apiUrl('/api/agent/api/agent/chat/stream'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

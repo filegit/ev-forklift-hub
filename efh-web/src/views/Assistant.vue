@@ -75,6 +75,7 @@
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ChatDotRound, Loading } from '@element-plus/icons-vue'
 import { sendChat } from '@/api/agent'
 
 const router = useRouter()

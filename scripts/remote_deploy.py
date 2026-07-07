@@ -14,7 +14,7 @@ except ImportError:
 
 HOST = "111.170.36.78"
 USER = "root"
-PASSWORD = os.environ.get("DEPLOY_PASSWORD", "Ue8fAQLk6z4z")
+PASSWORD = os.environ.get("DEPLOY_PASSWORD")
 REMOTE_DIR = "/opt/ev-forklift-hub"
 LOCAL_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -58,6 +58,9 @@ def run_ssh(client, cmd, timeout=600):
 
 
 def main():
+    if not PASSWORD:
+        raise SystemExit("DEPLOY_PASSWORD is required")
+
     tarball = make_tarball()
     print(f"Created {tarball} ({os.path.getsize(tarball)//1024//1024} MB)")
 

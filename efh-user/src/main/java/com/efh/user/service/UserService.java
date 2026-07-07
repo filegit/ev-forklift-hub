@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.efh.user.entity.User;
 import com.efh.user.vo.LoginVO;
 import com.efh.user.vo.RegisterVO;
+import com.efh.user.vo.SmsLoginVO;
 
 public interface UserService extends IService<User> {
     
@@ -19,10 +20,14 @@ public interface UserService extends IService<User> {
     String login(LoginVO loginVO);
 
     /**
-     * 发送登录短信验证码
-     * @return 演示模式下的验证码（便于测试）
+     * 验证码登录（手机号 + 短信验证码）
      */
-    String sendLoginSmsCode(String username);
+    String loginBySms(SmsLoginVO vo);
+
+    /**
+     * 向手机号发送登录验证码
+     */
+    String sendLoginSmsByPhone(String phone);
     
     /**
      * 获取用户信息

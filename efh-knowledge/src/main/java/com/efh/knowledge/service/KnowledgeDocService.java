@@ -95,6 +95,18 @@ public class KnowledgeDocService extends ServiceImpl<KnowledgeDocMapper, Knowled
         return new FileSystemResource(path.toFile());
     }
 
+    public Resource preview(Long docId, Long userId) {
+        KnowledgeDoc doc = requirePublished(docId);
+        if (!isUnlocked(userId, doc)) {
+            throw new BusinessException(403, "Please unlock the document first");
+        }
+        Path path = fileStorageService.resolve(doc.getFilePath());
+        if (!Files.exists(path)) {
+            throw new BusinessException("File does not exist");
+        }
+        return new FileSystemResource(path.toFile());
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void unlockByPoints(Long userId, Long docId) {
         KnowledgeDoc doc = requirePublished(docId);

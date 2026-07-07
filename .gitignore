@@ -4,17 +4,39 @@ target/
 *.log
 .DS_Store
 
-# 本地密钥与敏感配置（切勿提交）
-.env.local
+# Local secrets and environment overrides
 .env
+.env.local
 *.env.local
 !*.env.example
 !deploy.env.example
+scripts/sms.env
+**/sms.env
 **/application-local.yml
 efh-agent/application-local.yml
 
-# 兼容旧本地文件（若存在）
+# Runtime and generated data
+uploads/
+logs/
 agent-test-answer.txt
 
-# 运行时上传目录
-uploads/
+# Local build/deploy artifacts
+release/
+tools/
+*.tar.gz
+*.zip
+scripts/__pycache__/
+scripts/sms-test.json
+test-create-post-lf.sh
+
+# Frontend dependencies/build output
+node_modules/
+dist/
+
+# Editor noise
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

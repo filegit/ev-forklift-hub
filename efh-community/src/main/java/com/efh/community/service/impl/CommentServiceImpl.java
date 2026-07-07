@@ -48,6 +48,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 2. 如果是回复评论，验证父评论是否存在
         if (commentVO.getParentId() != null && commentVO.getParentId() > 0) {
             Comment parentComment = this.getById(commentVO.getParentId());
+            if (parentComment != null && !parentComment.getPostId().equals(commentVO.getPostId())) {
+                throw new BusinessException("Parent comment does not belong to this post");
+            }
             if (parentComment == null) {
                 throw new BusinessException("父评论不存在");
             }

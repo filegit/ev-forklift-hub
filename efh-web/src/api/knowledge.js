@@ -1,6 +1,12 @@
 import request from '@/utils/request'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
+import { apiUrl } from '@/utils/apiBase'
+
+const authHeaders = () => {
+  const userStore = useUserStore()
+  return userStore.token ? { Authorization: `Bearer ${userStore.token}` } : {}
+}
 
 export const getKnowledgeList = (params) => {
   return request({ url: '/knowledge/api/knowledge/doc/list', method: 'get', params })
@@ -23,12 +29,11 @@ export const unlockByAlipay = (id) => {
 }
 
 export const downloadKnowledgeDoc = async (id, fileName) => {
-  const userStore = useUserStore()
   const res = await axios({
-    url: `/api/knowledge/api/knowledge/doc/${id}/download`,
+    url: apiUrl(`/api/knowledge/api/knowledge/doc/${id}/download`),
     method: 'get',
     responseType: 'blob',
-    headers: userStore.token ? { Authorization: `Bearer ${userStore.token}` } : {}
+    headers: authHeaders()
   })
   const blob = new Blob([res.data])
   const link = document.createElement('a')
@@ -38,7 +43,15 @@ export const downloadKnowledgeDoc = async (id, fileName) => {
   URL.revokeObjectURL(link.href)
 }
 
-// ---------- 管理端 ----------
+export const previewKnowledgeDoc = async (id) => {
+  return axios({
+    url: apiUrl(`/api/knowledge/api/knowledge/doc/${id}/preview`),
+    method: 'get',
+    responseType: 'blob',
+    headers: authHeaders()
+  })
+}
+
 export const adminGetDocList = (params) => {
   return request({ url: '/knowledge/api/knowledge/admin/doc/list', method: 'get', params })
 }

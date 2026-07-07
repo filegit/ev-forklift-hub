@@ -10,6 +10,7 @@ import com.efh.user.service.SmsService;
 import com.efh.user.service.UserService;
 import com.efh.user.vo.LoginVO;
 import com.efh.user.vo.RegisterVO;
+import com.efh.user.vo.SmsLoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -146,8 +147,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户名或密码错误");
         }
 
-        smsService.verifyLoginCode(vo.getUsername(), user.getPhone(), vo.getSmsCode());
-
         log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
 
         // 6. 生成并返回 JWT Token
@@ -155,12 +154,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public String sendLoginSmsCode(String username) {
+    public String loginBySms(SmsLoginVO vo) {
+        log.info("验证码登录开始: phone={}", vo.getPhone());
+
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, username);
+        wrapper.eq(User::getPhone, vo.getPhone());
         User user = this.getOne(wrapper);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException("该手机号未注册");
+        }
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new BusinessException("账号已被禁用，请联系管理员");
+        }
+
+        smsService.verifyLoginCode(vo.getPhone(), vo.getSmsCode());
+
+        log.info("验证码登录成功: userId={}, username={}", user.getId(), user.getUsername());
+        return JwtUtil.generateToken(user.getId(), user.getUsername());
+    }
+
+    @Override
+    public String sendLoginSmsByPhone(String phone) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getPhone, phone);
+        User user = this.getOne(wrapper);
+        if (user == null) {
+            throw new BusinessException("该手机号未注册");
         }
         if (user.getStatus() != null && user.getStatus() == 0) {
             throw new BusinessException("账号已被禁用");

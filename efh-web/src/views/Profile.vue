@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-page">
+  <div class="profile-page efh-page">
     <el-card class="profile-card">
       <!-- 个人信息 -->
       <div class="profile-header">
@@ -47,7 +47,7 @@
               <div class="post-meta">
                 <span><el-icon><View /></el-icon> {{ post.viewCount }}</span>
                 <span><el-icon><ChatDotRound /></el-icon> {{ post.commentCount }}</span>
-                <span><el-icon><ThumbsUp /></el-icon> {{ post.likeCount }}</span>
+                <span><el-icon><Pointer /></el-icon> {{ post.likeCount }}</span>
               </div>
             </div>
             <el-empty v-if="myPosts.length === 0" description="暂无帖子" />
@@ -176,6 +176,7 @@ import { getUserPoints, exchangePoints, getExchangeRecords, purchasePoints } fro
 import { getMyPosts } from '@/api/post'
 import { getMyComments, deleteComment } from '@/api/comment'
 import { getMyCollections } from '@/api/collection'
+import { ChatDotRound, Pointer, View } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()

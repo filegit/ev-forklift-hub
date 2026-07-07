@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * 阿里云号码认证服务 - 短信认证（个人开发者免企业资质）
- * 文档: https://help.aliyun.com/zh/pnvs/use-cases/sms-verify-for-individual-developers
+ * 阿里云号码认证 - 短信认证 API
+ * 发送: SendSmsVerifyCode  https://help.aliyun.com/document_detail/2573695.html
+ * 核验: CheckSmsVerifyCode  https://help.aliyun.com/document_detail/2573696.html
  */
 @Slf4j
 @Component
@@ -30,66 +31,111 @@ public class AliyunPnvsSmsSender {
         this.smsProperties = smsProperties;
     }
 
-    /** 发送验证码（验证码由阿里云生成并下发） */
+    /**
+     * 发送短信验证码。
+     * TemplateParam 使用 {"code":"##code##"} 时须同时传 CodeType，验证码由阿里云生成，后续可用 CheckSmsVerifyCode 核验。
+     */
     public void sendVerificationCode(String phone) {
         validateConfig();
 
         try {
             CommonRequest request = buildRequest("SendSmsVerifyCode");
-            request.putQueryParameter("PhoneNumber", phone);
+            putCommonPhoneParams(request, phone);
             request.putQueryParameter("SignName", smsProperties.getSignName());
             request.putQueryParameter("TemplateCode", smsProperties.getTemplateCode());
-            request.putQueryParameter("TemplateParam", buildTemplateParam());
+            // 模板仅含 ${code} 时只传 code；含 ${min} 时可传 {"code":"##code##","min":"5"}
+            request.putQueryParameter("TemplateParam", smsProperties.getTemplateParam());
+            request.putQueryParameter("CodeType", String.valueOf(smsProperties.getCodeType()));
+            request.putQueryParameter("CodeLength", String.valueOf(smsProperties.getCodeLength()));
+            // ValidTime 单位：秒（文档默认 300）
+            request.putQueryParameter("ValidTime", String.valueOf(smsProperties.getCodeExpireSeconds()));
+            request.putQueryParameter("Interval", String.valueOf(smsProperties.getSendIntervalSeconds()));
+
+            log.info("SendSmsVerifyCode sign={}, template={}, phone={}",
+                    smsProperties.getSignName(), smsProperties.getTemplateCode(), maskPhone(phone));
 
             CommonResponse response = getClient().getCommonResponse(request);
             JsonNode body = MAPPER.readTree(response.getData());
-            String code = body.path("Code").asText("");
-            String message = body.path("Message").asText("");
-
-            if (!"OK".equalsIgnoreCase(code)) {
-                log.error("短信认证发送失败: phone={}, code={}, message={}",
-                        maskPhone(phone), code, message);
-                throw new BusinessException("短信发送失败：" + message);
+            if (!isOk(body)) {
+                throw mapApiError(body, phone);
             }
 
-            log.info("短信认证发送成功: phone={}", maskPhone(phone));
+            log.info("SendSmsVerifyCode 成功: phone={}", maskPhone(phone));
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("短信认证发送异常: phone={}", maskPhone(phone), e);
+            log.error("SendSmsVerifyCode 异常: phone={}", maskPhone(phone), e);
             throw new BusinessException("短信发送失败，请稍后重试");
         }
     }
 
-    /** 核验验证码（与 SendSmsVerifyCode 配套，TemplateParam 须含 ##code##） */
+    /**
+     * 核验短信验证码，Model.VerifyResult=PASS 表示成功。
+     */
     public void checkVerificationCode(String phone, String verifyCode) {
         validateConfig();
 
         try {
             CommonRequest request = buildRequest("CheckSmsVerifyCode");
-            request.putQueryParameter("PhoneNumber", phone);
+            putCommonPhoneParams(request, phone);
             request.putQueryParameter("VerifyCode", verifyCode.trim());
+            request.putQueryParameter("CaseAuthPolicy", "1");
 
             CommonResponse response = getClient().getCommonResponse(request);
             JsonNode body = MAPPER.readTree(response.getData());
-            String code = body.path("Code").asText("");
-            String message = body.path("Message").asText("");
-            String verifyResult = body.path("Model").path("VerifyResult").asText("");
-
-            if (!"OK".equalsIgnoreCase(code)) {
-                log.warn("短信认证核验接口失败: phone={}, code={}, message={}",
-                        maskPhone(phone), code, message);
-                throw new BusinessException("验证码校验失败，请重新获取");
+            if (!isOk(body)) {
+                throw mapApiError(body, phone);
             }
+
+            String verifyResult = body.path("Model").path("VerifyResult").asText("");
             if (!"PASS".equalsIgnoreCase(verifyResult)) {
                 throw new BusinessException("短信验证码错误或已过期");
             }
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("短信认证核验异常: phone={}", maskPhone(phone), e);
+            log.error("CheckSmsVerifyCode 异常: phone={}", maskPhone(phone), e);
             throw new BusinessException("验证码校验失败，请稍后重试");
         }
+    }
+
+    private void putCommonPhoneParams(CommonRequest request, String phone) {
+        request.putQueryParameter("CountryCode", smsProperties.getCountryCode());
+        request.putQueryParameter("PhoneNumber", phone);
+        if (StringUtils.hasText(smsProperties.getSchemeName())) {
+            request.putQueryParameter("SchemeName", smsProperties.getSchemeName());
+        }
+    }
+
+    private boolean isOk(JsonNode body) {
+        return "OK".equalsIgnoreCase(body.path("Code").asText(""));
+    }
+
+    private BusinessException mapApiError(JsonNode body, String phone) {
+        String code = body.path("Code").asText("");
+        String message = body.path("Message").asText("");
+        log.error("PNVS API 失败: phone={}, code={}, message={}, body={}",
+                maskPhone(phone), code, message, body.toString());
+
+        if ("biz.FREQUENCY".equalsIgnoreCase(code) || message.toLowerCase().contains("frequency")) {
+            return new BusinessException("发送过于频繁，请 60 秒后再试");
+        }
+        if (message.contains("签名") || message.contains("模版") || message.contains("模板")
+                || "isv.INVALID_PARAMETERS".equalsIgnoreCase(code)) {
+            return new BusinessException(
+                    "短信签名或模板无效。请到号码认证控制台 → 短信认证 → 参数配置 → 赠送签名配置，"
+                            + "复制列表中的签名名称（不要用旧方案名），模板用 100001，"
+                            + "当前配置 sign=" + smsProperties.getSignName()
+                            + " template=" + smsProperties.getTemplateCode());
+        }
+        return new BusinessException("短信发送失败：" + message);
+    }
+
+    private BusinessException apiError(String prefix, JsonNode body, String phone) {
+        String code = body.path("Code").asText("");
+        String message = body.path("Message").asText("");
+        log.error("{}: phone={}, code={}, message={}", prefix, maskPhone(phone), code, message);
+        return new BusinessException(prefix + "：" + message);
     }
 
     private IAcsClient getClient() {
@@ -109,21 +155,16 @@ public class AliyunPnvsSmsSender {
         return request;
     }
 
-    private String buildTemplateParam() throws Exception {
-        int minutes = Math.max(1, smsProperties.getCodeExpireSeconds() / 60);
-        return MAPPER.writeValueAsString(new TemplateParam("##code##", String.valueOf(minutes)));
-    }
-
     private void validateConfig() {
         if (!StringUtils.hasText(smsProperties.getAccessKeyId())
                 || !StringUtils.hasText(smsProperties.getAccessKeySecret())) {
-            throw new BusinessException("短信服务未配置 AccessKey，请在服务器设置 SMS_ACCESS_KEY_ID / SMS_ACCESS_KEY_SECRET");
+            throw new BusinessException("短信服务未配置 AccessKey");
         }
         if (!StringUtils.hasText(smsProperties.getSignName())) {
-            throw new BusinessException("短信服务未配置签名，请在控制台复制赠送签名并设置 SMS_SIGN_NAME");
+            throw new BusinessException("短信服务未配置签名");
         }
         if (!StringUtils.hasText(smsProperties.getTemplateCode())) {
-            throw new BusinessException("短信服务未配置模板，请在控制台复制赠送模板 CODE 并设置 SMS_TEMPLATE_CODE");
+            throw new BusinessException("短信服务未配置模板");
         }
     }
 
@@ -132,23 +173,5 @@ public class AliyunPnvsSmsSender {
             return phone;
         }
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
-    }
-
-    private static class TemplateParam {
-        private final String code;
-        private final String min;
-
-        TemplateParam(String code, String min) {
-            this.code = code;
-            this.min = min;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public String getMin() {
-            return min;
-        }
     }
 }

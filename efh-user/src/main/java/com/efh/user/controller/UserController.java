@@ -7,6 +7,7 @@ import com.efh.user.service.UserService;
 import com.efh.user.vo.LoginVO;
 import com.efh.user.vo.RegisterVO;
 import com.efh.user.vo.SendLoginSmsVO;
+import com.efh.user.vo.SmsLoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -102,21 +103,36 @@ public class UserController {
     }
 
     /**
-     * 发送登录短信验证码
+     * 验证码登录（手机号 + 短信验证码）
+     *
+     * POST /user/api/login/sms
+     * { "phone": "13800138000", "smsCode": "123456" }
+     */
+    @PostMapping("/login/sms")
+    public Result<Map<String, String>> loginBySms(@Validated @RequestBody SmsLoginVO vo) {
+        log.info("验证码登录请求: phone={}", vo.getPhone());
+        String token = userService.loginBySms(vo);
+        Map<String, String> data = new HashMap<>();
+        data.put("token", token);
+        return Result.success(data);
+    }
+
+    /**
+     * 发送登录短信验证码（验证码登录用）
      *
      * POST /user/api/sms/login
-     * { "username": "admin" }
+     * { "phone": "13800138000" }
      */
     @PostMapping("/sms/login")
     public Result<Map<String, String>> sendLoginSms(@Validated @RequestBody SendLoginSmsVO vo) {
-        log.info("发送登录验证码: username={}", vo.getUsername());
-        String mockCode = userService.sendLoginSmsCode(vo.getUsername());
+        log.info("发送登录验证码: phone={}", vo.getPhone());
+        String mockCode = userService.sendLoginSmsByPhone(vo.getPhone());
         Map<String, String> data = new HashMap<>();
         if (mockCode != null) {
             data.put("mockCode", mockCode);
             data.put("message", "演示模式：验证码为 " + mockCode);
         } else {
-            data.put("message", "验证码已发送到绑定手机，请注意查收");
+            data.put("message", "验证码已发送到手机，请注意查收");
         }
         return Result.success(data);
     }

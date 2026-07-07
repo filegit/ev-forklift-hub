@@ -4,7 +4,7 @@
 # 服务器信息
 SERVER_IP="8.219.135.26"
 SERVER_USER="root"
-SERVER_PASSWORD="aliyun2026_"
+SERVER_PASSWORD="${DEPLOY_PASSWORD:?DEPLOY_PASSWORD is required}"
 DEPLOY_DIR="/root/ev-forklift-hub"
 
 echo "开始部署到服务器 $SERVER_IP..."

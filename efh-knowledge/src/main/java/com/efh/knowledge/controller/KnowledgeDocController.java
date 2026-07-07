@@ -71,7 +71,7 @@ public class KnowledgeDocController {
     @GetMapping("/doc/{id}/download")
     public ResponseEntity<Resource> download(@PathVariable Long id,
                                              @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) throws Exception {
-        Long userId = UserContextUtil.requireUserId(userIdHeader);
+        Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
         KnowledgeDoc doc = knowledgeDocService.getById(id);
         Resource resource = knowledgeDocService.download(id, userId);
         String filename = URLEncoder.encode(doc.getFileName(), StandardCharsets.UTF_8.name()).replace("+", "%20");
@@ -79,6 +79,49 @@ public class KnowledgeDocController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    @GetMapping("/doc/{id}/preview")
+    public ResponseEntity<Resource> preview(@PathVariable Long id,
+                                            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) throws Exception {
+        Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
+        KnowledgeDoc doc = knowledgeDocService.getById(id);
+        Resource resource = knowledgeDocService.preview(id, userId);
+        String filename = URLEncoder.encode(doc.getFileName(), StandardCharsets.UTF_8.name()).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + filename)
+                .contentType(resolveMediaType(doc.getFileType()))
+                .body(resource);
+    }
+
+    private MediaType resolveMediaType(String fileType) {
+        if (fileType == null) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+        String type = fileType.toLowerCase();
+        switch (type) {
+            case "pdf":
+                return MediaType.APPLICATION_PDF;
+            case "png":
+                return MediaType.IMAGE_PNG;
+            case "jpg":
+            case "jpeg":
+                return MediaType.IMAGE_JPEG;
+            case "gif":
+                return MediaType.IMAGE_GIF;
+            case "txt":
+            case "md":
+            case "csv":
+            case "log":
+                return MediaType.TEXT_PLAIN;
+            case "json":
+                return MediaType.APPLICATION_JSON;
+            case "html":
+            case "htm":
+                return MediaType.TEXT_HTML;
+            default:
+                return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 
     @PostMapping("/pay/alipay/notify")

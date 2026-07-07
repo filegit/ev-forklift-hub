@@ -12,5 +12,5 @@ public interface SmsService {
     /**
      * 校验登录验证码
      */
-    void verifyLoginCode(String username, String phone, String code);
+    void verifyLoginCode(String phone, String code);
 }

@@ -39,7 +39,7 @@ public class SmsServiceImpl implements SmsService {
             throw new BusinessException("该账号未绑定手机号，无法发送验证码");
         }
 
-        String intervalKey = INTERVAL_KEY_PREFIX + user.getUsername();
+        String intervalKey = INTERVAL_KEY_PREFIX + user.getPhone();
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(intervalKey))) {
             throw new BusinessException("发送过于频繁，请稍后再试");
         }
@@ -49,7 +49,7 @@ public class SmsServiceImpl implements SmsService {
 
         if (smsProperties.isMock()) {
             String code = generateCode();
-            String codeKey = CODE_KEY_PREFIX + user.getUsername();
+            String codeKey = CODE_KEY_PREFIX + user.getPhone();
             stringRedisTemplate.opsForValue().set(codeKey, code,
                     smsProperties.getCodeExpireSeconds(), TimeUnit.SECONDS);
             log.info("[SMS-MOCK] 登录验证码 username={} phone={} code={}",
@@ -67,13 +67,13 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
-    public void verifyLoginCode(String username, String phone, String code) {
+    public void verifyLoginCode(String phone, String code) {
         if (!StringUtils.hasText(code)) {
             throw new BusinessException("请输入短信验证码");
         }
 
         if (smsProperties.isMock()) {
-            String codeKey = CODE_KEY_PREFIX + username;
+            String codeKey = CODE_KEY_PREFIX + phone;
             String cached = stringRedisTemplate.opsForValue().get(codeKey);
             if (!StringUtils.hasText(cached)) {
                 throw new BusinessException("验证码已过期，请重新获取");

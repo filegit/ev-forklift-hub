@@ -9,10 +9,19 @@ export const login = (data) => {
   })
 }
 
-// 发送登录短信验证码
+// 发送登录短信验证码（验证码登录）
 export const sendLoginSms = (data) => {
   return request({
     url: '/user/api/sms/login',
+    method: 'post',
+    data
+  })
+}
+
+// 验证码登录
+export const loginBySms = (data) => {
+  return request({
+    url: '/user/api/login/sms',
     method: 'post',
     data
   })

@@ -90,5 +90,10 @@ efh:
     region-id: ${SMS_REGION_ID:cn-hangzhou}
     access-key-id: ${SMS_ACCESS_KEY_ID:}
     access-key-secret: ${SMS_ACCESS_KEY_SECRET:}
-    sign-name: ${SMS_SIGN_NAME:}
-    template-code: ${SMS_TEMPLATE_CODE:}
+    sign-name: ${SMS_SIGN_NAME:恒创联众}
+    template-code: ${SMS_TEMPLATE_CODE:100001}
+    template-param: ${SMS_TEMPLATE_PARAM:{"code":"##code##","min":"5"}}
+    country-code: ${SMS_COUNTRY_CODE:86}
+    scheme-name: ${SMS_SCHEME_NAME:}
+    code-length: ${SMS_CODE_LENGTH:6}
+    code-type: ${SMS_CODE_TYPE:1}

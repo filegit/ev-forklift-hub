@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { login, register, getUserInfo } from '@/api/user'
+import { login, loginBySms, register, getUserInfo } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
@@ -9,6 +9,13 @@ export const useUserStore = defineStore('user', () => {
   // 登录
   const loginAction = async (loginForm) => {
     const res = await login(loginForm)
+    token.value = res.data.token
+    localStorage.setItem('token', res.data.token)
+    await fetchUserInfo()
+  }
+
+  const loginBySmsAction = async (form) => {
+    const res = await loginBySms(form)
     token.value = res.data.token
     localStorage.setItem('token', res.data.token)
     await fetchUserInfo()
@@ -39,6 +46,7 @@ export const useUserStore = defineStore('user', () => {
     token,
     userInfo,
     loginAction,
+    loginBySmsAction,
     registerAction,
     fetchUserInfo,
     logout

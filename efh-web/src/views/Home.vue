@@ -12,6 +12,24 @@
       </div>
     </section>
 
+    <section class="app-download efh-section">
+      <div>
+        <span class="efh-kicker">MOBILE APP</span>
+        <h2>手机端安装使用</h2>
+        <p>安卓可直接下载安装包；苹果手机可打开 iOS 入口并添加到主屏幕，联网使用同一套系统。</p>
+      </div>
+      <div class="download-actions">
+        <a class="download-button primary" href="/downloads/ev-forklift-hub-debug.apk" download>
+          <span>Android</span>
+          <strong>下载安卓安装包</strong>
+        </a>
+        <a class="download-button" href="/ios.html" target="_blank" rel="noopener">
+          <span>iPhone</span>
+          <strong>打开苹果使用入口</strong>
+        </a>
+      </div>
+    </section>
+
     <div class="efh-metric-grid efh-section">
       <div class="efh-metric">
         <label>业务闭环</label>
@@ -40,7 +58,7 @@
         <el-radio-button :label="4">其他</el-radio-button>
       </el-radio-group>
     </el-card>
-    
+
     <el-card class="post-list efh-section" v-loading="loading">
       <div class="efh-post-item" v-for="post in postList" :key="post.id" @click="goToDetail(post.id)">
         <div class="post-header">
@@ -59,10 +77,10 @@
           <div class="post-time">{{ formatTime(post.createTime) }}</div>
         </div>
       </div>
-      
+
       <el-empty v-if="!loading && postList.length === 0" description="暂无帖子" />
     </el-card>
-    
+
     <div class="efh-pagination">
       <el-pagination
         v-model:current-page="currentPage"
@@ -100,7 +118,7 @@ const fetchPostList = async () => {
     if (currentCategory.value > 0) {
       params.category = currentCategory.value
     }
-    
+
     const res = await getPostList(params)
     postList.value = res.data.records || []
     total.value = res.data.total || 0
@@ -144,7 +162,8 @@ onMounted(() => {
   max-width: var(--efh-max-width);
 }
 
-.workbench {
+.workbench,
+.app-download {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -153,25 +172,79 @@ onMounted(() => {
   margin-bottom: 16px;
   border-radius: 8px;
   border: 1px solid var(--efh-border-light);
+  background: #fff;
+}
+
+.workbench {
   background: linear-gradient(135deg, #ffffff 0%, #edf8f5 100%);
 }
 
-.workbench h1 {
+.workbench h1,
+.app-download h2 {
   margin: 0;
-  font-size: 30px;
   line-height: 1.2;
 }
 
-.workbench p {
+.workbench h1 {
+  font-size: 30px;
+}
+
+.app-download h2 {
+  font-size: 22px;
+}
+
+.workbench p,
+.app-download p {
   max-width: 680px;
   margin: 10px 0 0;
   color: var(--efh-text-secondary);
 }
 
-.quick-actions {
+.quick-actions,
+.download-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.download-actions {
+  justify-content: flex-end;
+}
+
+.download-button {
+  min-width: 176px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--efh-border);
+  background: #fff;
+  color: var(--efh-text);
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.download-button.primary {
+  background: var(--efh-primary);
+  border-color: var(--efh-primary);
+  color: #fff;
+}
+
+.download-button span {
+  display: block;
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.download-button strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+@media (hover: hover) {
+  .download-button:hover {
+    transform: translateY(-1px);
+    border-color: var(--efh-primary);
+  }
 }
 
 .filter-card :deep(.el-card__body) {
@@ -196,12 +269,22 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .workbench {
+  .workbench,
+  .app-download {
     flex-direction: column;
   }
 
   .workbench h1 {
     font-size: 23px;
+  }
+
+  .app-download h2 {
+    font-size: 20px;
+  }
+
+  .download-actions,
+  .download-button {
+    width: 100%;
   }
 
   .post-header {

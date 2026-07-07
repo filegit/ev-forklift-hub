@@ -3,8 +3,12 @@
 
 $SERVER_IP = "8.219.135.26"
 $SERVER_USER = "root"
-$SERVER_PASSWORD = "aliyun2026_"
+$SERVER_PASSWORD = $env:DEPLOY_PASSWORD
 $DEPLOY_DIR = "/root/ev-forklift-hub"
+
+if ([string]::IsNullOrWhiteSpace($SERVER_PASSWORD)) {
+    throw "DEPLOY_PASSWORD is required"
+}
 
 Write-Host "开始部署到服务器 $SERVER_IP..." -ForegroundColor Green
 
@@ -48,7 +52,7 @@ Write-Host ""
 Write-Host "   方法1: 使用 WinSCP 或 FileZilla" -ForegroundColor White
 Write-Host "   - 连接到 $SERVER_IP" -ForegroundColor White
 Write-Host "   - 用户名: $SERVER_USER" -ForegroundColor White
-Write-Host "   - 密码: $SERVER_PASSWORD" -ForegroundColor White
+Write-Host "   - 密码: <DEPLOY_PASSWORD>" -ForegroundColor White
 Write-Host "   - 上传 deploy-temp 目录中的所有文件到 /root/ev-forklift-hub" -ForegroundColor White
 Write-Host ""
 Write-Host "   方法2: 使用 scp 命令（如果已安装 OpenSSH）" -ForegroundColor White
