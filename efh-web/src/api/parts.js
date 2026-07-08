@@ -68,10 +68,6 @@ export const appendShipmentTrace = (id, data) => {
   return request({ url: `/parts/api/parts/order/${id}/trace`, method: 'post', data })
 }
 
-export const mockPay = (payNo) => {
-  return request({ url: '/parts/api/parts/pay/mock/confirm', method: 'post', params: { payNo } })
-}
-
 export const createAlipayPagePay = (payNo) => {
   return request({ url: '/parts/api/parts/pay/alipay/page', method: 'post', params: { payNo } })
 }

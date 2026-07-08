@@ -15,3 +15,7 @@ export const getExchangeRecords = (params) => {
 export const purchasePoints = (packageId) => {
   return request({ url: '/user/api/points/purchase', method: 'post', data: { packageId } })
 }
+
+export const getPointsPayStatus = (payNo) => {
+  return request({ url: '/user/api/points/pay/status', method: 'get', params: { payNo } })
+}

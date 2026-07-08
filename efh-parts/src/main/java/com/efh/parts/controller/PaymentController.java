@@ -49,18 +49,6 @@ public class PaymentController {
         return Result.success(paymentService.getPayStatus(userId, payNo));
     }
 
-    /** 开发环境模拟支付（生产环境请关闭或删除） */
-    @PostMapping("/mock/confirm")
-    public Result<Map<String, String>> mockConfirm(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
-                                                   @RequestParam String payNo) {
-        Long userId = UserContextUtil.requireUserId(userIdHeader);
-        paymentService.mockPaySuccess(userId, payNo);
-        Map<String, String> data = new HashMap<>();
-        data.put("payNo", payNo);
-        data.put("status", "success");
-        return Result.success(data);
-    }
-
     private Map<String, String> extractParams(HttpServletRequest request) {
         Map<String, String> params = new HashMap<>();
         request.getParameterMap().forEach((key, values) -> {

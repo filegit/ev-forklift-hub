@@ -16,7 +16,4 @@ public interface PaymentService extends IService<PartsPayment> {
     String handleAlipayNotify(Map<String, String> params);
 
     PayStatusVO getPayStatus(Long userId, String payNo);
-
-    /** @deprecated 仅开发调试，生产请走支付宝 */
-    void mockPaySuccess(Long userId, String payNo);
 }

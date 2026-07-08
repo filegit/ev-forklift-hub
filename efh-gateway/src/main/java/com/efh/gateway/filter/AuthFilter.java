@@ -40,6 +40,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/user/api/login/sms",
             "/user/api/register",
             "/user/api/sms/login",
+            "/user/api/points/pay/alipay/notify",
             "/community/api/post/list",
             "/community/api/comment/list",
             "/parts/api/parts/list",

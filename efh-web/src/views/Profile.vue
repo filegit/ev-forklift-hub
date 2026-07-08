@@ -87,7 +87,7 @@
           <div class="exchange-section">
             <div class="exchange-info">
               <p>当前可用积分: <span class="points">{{ userPoints?.availablePoints || 0 }}</span></p>
-              <p class="hint">模拟支付，购买后积分立即到账</p>
+              <p class="hint">购买积分将跳转支付宝支付，支付成功后自动到账</p>
             </div>
             <div class="exchange-items">
               <div class="exchange-item" v-for="pkg in purchasePackages" :key="pkg.id">
@@ -293,10 +293,26 @@ const handleExchange = async (itemId) => {
 const handlePurchase = async (packageId) => {
   try {
     const res = await purchasePoints(packageId)
-    userPoints.value = res.data
-    ElMessage.success('购买成功，积分已到账')
+    if (res.data?.payForm) {
+      submitAlipayForm(res.data.payForm)
+      return
+    }
+    ElMessage.error('支付表单生成失败')
   } catch (error) {
     ElMessage.error('购买失败')
+  }
+}
+
+const submitAlipayForm = (payForm) => {
+  const wrapper = document.createElement('div')
+  wrapper.style.display = 'none'
+  wrapper.innerHTML = payForm
+  document.body.appendChild(wrapper)
+  const form = wrapper.querySelector('form')
+  if (form) {
+    form.submit()
+  } else {
+    ElMessage.error('支付表单生成失败')
   }
 }
 

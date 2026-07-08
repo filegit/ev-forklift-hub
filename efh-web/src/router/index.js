@@ -22,6 +22,7 @@ const routes = [
       { path: 'knowledge/admin', name: 'KnowledgeAdmin', component: () => import('@/views/KnowledgeAdmin.vue'), meta: { requiresAuth: true } },
       { path: 'knowledge/unlock/result', name: 'KnowledgeUnlockResult', component: () => import('@/views/KnowledgeUnlockResult.vue'), meta: { requiresAuth: true } },
       { path: 'knowledge/:id', name: 'KnowledgeDetail', component: () => import('@/views/KnowledgeDetail.vue') },
+      { path: 'points/pay/result', name: 'PointsPayResult', component: () => import('@/views/PointsPayResult.vue'), meta: { requiresAuth: true } },
       { path: 'assistant', name: 'Assistant', component: () => import('@/views/Assistant.vue') },
       { path: 'profile', name: 'Profile', component: () => import('@/views/Profile.vue'), meta: { requiresAuth: true } },
       { path: 'collections', name: 'Collections', component: () => import('@/views/Collections.vue'), meta: { requiresAuth: true } }

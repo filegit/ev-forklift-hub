@@ -134,12 +134,6 @@ public class PaymentServiceImpl extends ServiceImpl<PartsPaymentMapper, PartsPay
         return vo;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void mockPaySuccess(Long userId, String payNo) {
-        completePaymentByPayNo(payNo, "MOCK-" + payNo, userId);
-    }
-
     private PartsPayment requirePendingPayment(Long userId, String payNo) {
         PartsPayment payment = getOne(new LambdaQueryWrapper<PartsPayment>().eq(PartsPayment::getPayNo, payNo));
         if (payment == null) {
@@ -183,7 +177,7 @@ public class PaymentServiceImpl extends ServiceImpl<PartsPaymentMapper, PartsPay
         payment.setPayTime(LocalDateTime.now());
         payment.setThirdTradeNo(thirdTradeNo);
         if (payment.getPayChannel() == null || "pending".equals(payment.getPayChannel())) {
-            payment.setPayChannel(thirdTradeNo != null && thirdTradeNo.startsWith("MOCK") ? "mock" : "alipay");
+            payment.setPayChannel("alipay");
         }
         updateById(payment);
 

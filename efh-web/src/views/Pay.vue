@@ -19,14 +19,11 @@
               支付宝网页支付
             </span>
           </el-radio>
-          <el-radio v-if="showMock" label="mock" border>
-            演示支付
-          </el-radio>
         </el-radio-group>
 
         <el-alert
           v-if="payChannel === 'alipay' && !alipayReady"
-          title="支付宝暂未完成配置。生产环境需要配置 ALIPAY_ENABLED=true、应用私钥、公钥与回调地址；本地演示可使用演示支付。"
+          title="支付宝暂未完成配置。生产环境需要配置 ALIPAY_ENABLED=true、应用私钥、公钥与回调地址。"
           type="warning"
           :closable="false"
           show-icon
@@ -40,7 +37,7 @@
           :disabled="payChannel === 'alipay' && !alipayReady"
           @click="handlePay"
         >
-          {{ payChannel === 'alipay' ? '跳转支付宝支付' : '确认演示支付' }}
+          跳转支付宝支付
         </el-button>
         <el-button link @click="$router.push('/orders')">稍后支付，查看订单</el-button>
       </div>
@@ -75,7 +72,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CircleCheck, Wallet } from '@element-plus/icons-vue'
-import { getOrderByNo, createAlipayPagePay, mockPay } from '@/api/parts'
+import { getOrderByNo, createAlipayPagePay } from '@/api/parts'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
@@ -86,7 +83,6 @@ const orderNo = ref(route.params.orderNo)
 const detail = ref(null)
 const payChannel = ref('alipay')
 const alipayReady = ref(true)
-const showMock = ref(import.meta.env.DEV)
 
 onMounted(async () => {
   loading.value = true
@@ -121,14 +117,9 @@ const handlePay = async () => {
   }
   paying.value = true
   try {
-    if (payChannel.value === 'alipay') {
-      const res = await createAlipayPagePay(detail.value.payment.payNo)
-      submitAlipayForm(res.data.payForm)
-      return
-    }
-    await mockPay(detail.value.payment.payNo)
-    ElMessage.success('支付成功，订单已进入待发货')
-    router.push(`/orders/${detail.value.order.id}`)
+    const res = await createAlipayPagePay(detail.value.payment.payNo)
+    submitAlipayForm(res.data.payForm)
+    return
   } catch (e) {
     if (payChannel.value === 'alipay') {
       alipayReady.value = false
