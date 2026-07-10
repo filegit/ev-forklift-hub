@@ -19,12 +19,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 多轮对话上下文存储（问题1/12）
- * - 短期：Redis List JSON，所有 Java 实例共享
- * - 长期：MySQL agent_conversation.summary
- * - 分布式锁：同一 userId+sessionId 读写串行，避免多实例混乱
- */
 @Slf4j
 @Service
 public class ConversationContextStore {
@@ -69,7 +63,11 @@ public class ConversationContextStore {
                 ctx.setMessages(messages);
             }
         } catch (Exception e) {
-            log.warn("加载 Redis 短期记忆失败: {}", e.getMessage());
+            log.warn("Load Redis conversation memory failed: {}", e.getMessage());
+        }
+
+        if (ctx.getMessages().isEmpty()) {
+            ctx.setMessages(loadMysqlMessages(uid, sid));
         }
 
         try {
@@ -80,13 +78,15 @@ public class ConversationContextStore {
                 ctx.setSummary(summaries.get(0));
             }
         } catch (Exception e) {
-            log.debug("长期记忆未初始化: {}", e.getMessage());
+            log.debug("Long-term memory is not initialized: {}", e.getMessage());
         }
         return ctx;
     }
 
     public void save(ConversationContext ctx) {
-        if (ctx == null) return;
+        if (ctx == null) {
+            return;
+        }
         Long uid = ctx.getUserId() == null ? 0L : ctx.getUserId();
         String sid = ctx.getSessionId();
         String lockKey = REDIS_LOCK_PREFIX + uid + ":" + sid;
@@ -122,7 +122,7 @@ public class ConversationContextStore {
             String key = REDIS_CTX_PREFIX + userId + ":" + sessionId;
             stringRedisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(messages), 24, TimeUnit.HOURS);
         } catch (Exception e) {
-            log.warn("写入 Redis 短期记忆失败: {}", e.getMessage());
+            log.warn("Write Redis conversation memory failed: {}", e.getMessage());
         }
     }
 
@@ -132,9 +132,67 @@ public class ConversationContextStore {
                     "INSERT INTO agent_conversation (user_id, session_id, summary, message_count, update_time) VALUES (?,?,?,?,NOW()) " +
                             "ON DUPLICATE KEY UPDATE summary=COALESCE(VALUES(summary), summary), message_count=?, update_time=NOW()",
                     userId, sessionId, summary, messages.size(), messages.size());
+            persistMysqlMessages(userId, sessionId, messages);
         } catch (Exception e) {
-            log.debug("MySQL 会话元数据写入跳过: {}", e.getMessage());
+            log.debug("Write MySQL conversation metadata skipped: {}", e.getMessage());
         }
+    }
+
+    private List<ChatMessage> loadMysqlMessages(Long userId, String sessionId) {
+        try {
+            Long conversationId = findConversationId(userId, sessionId);
+            if (conversationId == null) {
+                return new ArrayList<>();
+            }
+            return agentJdbc.query(
+                    "SELECT role, content, UNIX_TIMESTAMP(create_time) * 1000 FROM agent_message WHERE conversation_id = ? ORDER BY id ASC",
+                    (rs, rowNum) -> {
+                        String content = rs.getString(2);
+                        ChatMessage message = new ChatMessage();
+                        message.setRole(rs.getString(1));
+                        message.setContent(content);
+                        message.setTokenCount(estimateTokens(content));
+                        message.setTimestamp(rs.getLong(3));
+                        return message;
+                    }, conversationId);
+        } catch (Exception e) {
+            log.debug("Read MySQL conversation messages skipped: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private void persistMysqlMessages(Long userId, String sessionId, List<ChatMessage> messages) {
+        if (messages == null) {
+            return;
+        }
+        try {
+            Long conversationId = findConversationId(userId, sessionId);
+            if (conversationId == null) {
+                return;
+            }
+            agentJdbc.update("DELETE FROM agent_message WHERE conversation_id = ?", conversationId);
+            for (ChatMessage message : messages) {
+                agentJdbc.update(
+                        "INSERT INTO agent_message (conversation_id, role, content, create_time) VALUES (?,?,?,FROM_UNIXTIME(? / 1000))",
+                        conversationId, message.getRole(), message.getContent(), message.getTimestamp());
+            }
+        } catch (Exception e) {
+            log.debug("Write MySQL conversation messages skipped: {}", e.getMessage());
+        }
+    }
+
+    private Long findConversationId(Long userId, String sessionId) {
+        List<Long> ids = agentJdbc.query(
+                "SELECT id FROM agent_conversation WHERE user_id = ? AND session_id = ? LIMIT 1",
+                (rs, rowNum) -> rs.getLong(1), userId, sessionId);
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    private int estimateTokens(String content) {
+        if (content == null || content.isEmpty()) {
+            return 0;
+        }
+        return Math.max(1, content.length() / 2);
     }
 
     public void updateSummary(Long userId, String sessionId, String summary) {
@@ -144,7 +202,7 @@ public class ConversationContextStore {
                             "ON DUPLICATE KEY UPDATE summary=VALUES(summary), update_time=NOW()",
                     userId, sessionId, summary);
         } catch (Exception e) {
-            log.warn("更新长期记忆摘要失败: {}", e.getMessage());
+            log.warn("Update long-term memory summary failed: {}", e.getMessage());
         }
     }
 }
