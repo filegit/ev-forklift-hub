@@ -7,11 +7,14 @@
             <h2>叉车 AI Agent</h2>
             <p>面向售后、配件、知识库和社区问答的业务协同助手</p>
           </div>
-          <el-radio-group v-model="scope" size="small">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="knowledge">知识库</el-radio-button>
-            <el-radio-button label="community">社区</el-radio-button>
-          </el-radio-group>
+          <div class="header-actions">
+            <el-button text size="small" @click="clearHistory">清空本机记录</el-button>
+            <el-radio-group v-model="scope" size="small">
+              <el-radio-button label="all">全部</el-radio-button>
+              <el-radio-button label="knowledge">知识库</el-radio-button>
+              <el-radio-button label="community">社区</el-radio-button>
+            </el-radio-group>
+          </div>
         </div>
 
         <div class="chat-body" ref="chatBodyRef">
@@ -58,11 +61,7 @@
         </div>
 
         <div class="input-tools">
-          <el-input
-            v-model="imageUrlText"
-            placeholder="可选：粘贴故障图片 URL，多个用逗号分隔"
-            clearable
-          />
+          <el-input v-model="imageUrlText" placeholder="可选：粘贴故障图片 URL，多个用逗号分隔" clearable />
           <el-checkbox v-model="allowCreateTicket">允许确认后创建售后工单</el-checkbox>
         </div>
 
@@ -82,6 +81,11 @@
         <div class="trace-header">
           <h3>Agent 执行链路</h3>
           <el-tag size="small" type="success" effect="plain">可观测</el-tag>
+        </div>
+
+        <div class="trace-section">
+          <div class="trace-title">会话</div>
+          <div class="session-line">{{ sessionId || '尚未开始' }}</div>
         </div>
 
         <div class="trace-section">
@@ -112,11 +116,11 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound, Loading } from '@element-plus/icons-vue'
-import { sendChat, sendChatStream } from '@/api/agent'
+import { sendChat, sendChatStream, getChatHistory } from '@/api/agent'
 
 const router = useRouter()
 const sessionId = ref(localStorage.getItem('agent_session_id') || '')
@@ -133,12 +137,62 @@ const currentStage = ref('')
 const chatBodyRef = ref(null)
 let abortStream = null
 
+const historyKey = () => `agent_messages_${sessionId.value || 'anonymous'}`
+
 const quickQuestions = [
   '叉车 48V 电池充不进电怎么排查？',
   'PO202607100001 的配件订单物流到哪了？',
   '我要报修，叉车升降无力，需要上门维修',
   '结合知识库和社区经验，比较铅酸电池和锂电池保养差异'
 ]
+
+onMounted(async () => {
+  loadLocalHistory()
+  if (sessionId.value) {
+    await loadRemoteHistory()
+  }
+  await scrollToBottom()
+})
+
+watch(messages, () => {
+  saveLocalHistory()
+}, { deep: true })
+
+const loadLocalHistory = () => {
+  if (!sessionId.value) return
+  try {
+    const raw = localStorage.getItem(historyKey())
+    if (raw) {
+      messages.value = JSON.parse(raw)
+    }
+  } catch (error) {
+    localStorage.removeItem(historyKey())
+  }
+}
+
+const saveLocalHistory = () => {
+  if (!sessionId.value || messages.value.length === 0) return
+  localStorage.setItem(historyKey(), JSON.stringify(messages.value.slice(-40)))
+}
+
+const loadRemoteHistory = async () => {
+  try {
+    const res = await getChatHistory(sessionId.value)
+    const rows = res.data?.messages || []
+    if (rows.length) {
+      messages.value = rows
+        .filter(item => item.role === 'user' || item.role === 'assistant')
+        .map(item => ({
+          role: item.role,
+          content: item.content,
+          sources: [],
+          meta: null
+        }))
+    }
+  } catch (error) {
+    // Local history already gives the user continuity when Redis/MySQL is unavailable.
+  }
+}
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -217,15 +271,7 @@ const handleSend = async () => {
     },
     onMeta: async (meta) => {
       if (!meta) return
-      if (meta.sessionId) {
-        sessionId.value = meta.sessionId
-        localStorage.setItem('agent_session_id', meta.sessionId)
-      }
-      assistantMsg.sources = meta.sources || []
-      assistantMsg.meta = { intent: meta.intent, llmUsed: meta.llmUsed }
-      stageEvents.value = meta.stageEvents || stageEvents.value
-      lastPlan.value = meta.plan || []
-      lastToolCalls.value = meta.toolCalls || []
+      applyResponseMeta(meta, assistantMsg)
       await scrollToBottom()
     },
     onDone: async () => {
@@ -239,36 +285,58 @@ const handleSend = async () => {
     onClose: async () => {
       loading.value = false
       currentStage.value = ''
+      saveLocalHistory()
       await scrollToBottom()
     }
   })
+}
+
+const applyResponseMeta = (data, assistantMsg) => {
+  if (data.sessionId) {
+    const oldKey = historyKey()
+    sessionId.value = data.sessionId
+    localStorage.setItem('agent_session_id', data.sessionId)
+    if (oldKey !== historyKey()) {
+      localStorage.removeItem(oldKey)
+    }
+  }
+  assistantMsg.sources = data.sources || []
+  assistantMsg.meta = { intent: data.intent, llmUsed: data.llmUsed }
+  stageEvents.value = data.stageEvents || stageEvents.value
+  lastPlan.value = data.plan || []
+  lastToolCalls.value = data.toolCalls || []
+  saveLocalHistory()
 }
 
 const fallbackSend = async (payload, assistantMsg) => {
   try {
     const res = await sendChat(payload)
     const data = res.data || {}
-    if (data.sessionId) {
-      sessionId.value = data.sessionId
-      localStorage.setItem('agent_session_id', data.sessionId)
-    }
     assistantMsg.content = data.answer || '未返回答案'
-    assistantMsg.sources = data.sources || []
-    assistantMsg.meta = { intent: data.intent, llmUsed: data.llmUsed }
-    stageEvents.value = data.stageEvents || stageEvents.value
-    lastPlan.value = data.plan || []
-    lastToolCalls.value = data.toolCalls || []
+    applyResponseMeta(data, assistantMsg)
   } catch (error) {
     assistantMsg.content = '问答失败，请稍后重试。'
     ElMessage.error('问答失败，请稍后重试')
   } finally {
     loading.value = false
     currentStage.value = ''
-    if (abortStream) {
-      abortStream = null
-    }
+    abortStream = null
+    saveLocalHistory()
     await scrollToBottom()
   }
+}
+
+const clearHistory = () => {
+  if (sessionId.value) {
+    localStorage.removeItem(historyKey())
+  }
+  localStorage.removeItem('agent_session_id')
+  sessionId.value = ''
+  messages.value = []
+  stageEvents.value = []
+  lastPlan.value = []
+  lastToolCalls.value = []
+  ElMessage.success('已清空本机咨询记录')
 }
 </script>
 
@@ -297,12 +365,18 @@ const fallbackSend = async (payload, assistantMsg) => {
 }
 
 .panel-header,
-.trace-header {
+.trace-header,
+.header-actions {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.header-actions {
+  align-items: center;
+  margin-bottom: 0;
 }
 
 .panel-header h2,
@@ -467,6 +541,12 @@ const fallbackSend = async (payload, assistantMsg) => {
   margin-top: 14px;
 }
 
+.session-line {
+  color: #6b7280;
+  font-size: 12px;
+  word-break: break-all;
+}
+
 .stage-item {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr);
@@ -514,6 +594,11 @@ const fallbackSend = async (payload, assistantMsg) => {
   .chat-input {
     grid-template-columns: 1fr;
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    flex-direction: column-reverse;
     align-items: stretch;
   }
 

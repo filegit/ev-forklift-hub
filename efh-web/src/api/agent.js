@@ -72,3 +72,10 @@ export const getAgentHealth = () => {
     method: 'get'
   })
 }
+
+export const getChatHistory = (sessionId) => {
+  return request({
+    url: `/agent/api/agent/chat/history/${sessionId}`,
+    method: 'get'
+  })
+}

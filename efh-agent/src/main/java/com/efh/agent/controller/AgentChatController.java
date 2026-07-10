@@ -3,6 +3,7 @@ package com.efh.agent.controller;
 import com.efh.agent.service.AgentChatService;
 import com.efh.agent.service.monitor.AgentMetricsService;
 import com.efh.agent.service.security.RequireSafety;
+import com.efh.agent.vo.ChatHistoryVO;
 import com.efh.agent.vo.ChatRequestVO;
 import com.efh.agent.vo.ChatResponseVO;
 import com.efh.common.result.Result;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -43,6 +45,13 @@ public class AgentChatController {
                                  @Validated @RequestBody ChatRequestVO request) {
         Long userId = parseUserId(userIdHeader);
         return agentChatService.chatStream(userId, request);
+    }
+
+    @GetMapping("/chat/history/{sessionId}")
+    public Result<ChatHistoryVO> history(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                                         @PathVariable String sessionId) {
+        Long userId = parseUserId(userIdHeader);
+        return Result.success(agentChatService.history(userId, sessionId));
     }
 
     @GetMapping("/metrics")
