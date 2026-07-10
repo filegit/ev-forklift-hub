@@ -106,8 +106,13 @@ mkdir -p logs
 for j in efh-gateway/target/*.jar efh-user/target/*.jar efh-community/target/*.jar efh-parts/target/*.jar efh-service/target/*.jar efh-knowledge/target/*.jar efh-agent/target/*.jar; do
   [ -f "$j" ] || continue
   name=$(basename "$j" .jar)
-  pkill -f "$name" 2>/dev/null || true
-  nohup env NACOS_DISCOVERY_ENABLED=false java -Xms256m -Xmx512m -jar "$j" > logs/$name.log 2>&1 &
+  pids=$(pgrep -f "[/]$name.jar" 2>/dev/null || true)
+  [ -n "$pids" ] && kill $pids 2>/dev/null || true
+  nohup java -Xms256m -Xmx512m -jar "$j" \
+    --spring.cloud.nacos.discovery.enabled=false \
+    --spring.cloud.service-registry.auto-registration.enabled=false \
+    --spring.cloud.discovery.enabled=false \
+    > logs/$name.log 2>&1 &
   echo "Started $j"
 done
 sleep 15
