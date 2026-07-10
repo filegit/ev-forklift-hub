@@ -10,7 +10,7 @@ spring:
         ip: 127.0.0.1
         namespace: 80fe315a-7634-4d77-b7d3-703a2a24d7a0
         group: DEFAULT_GROUP
-        enabled: true
+        enabled: ${NACOS_DISCOVERY_ENABLED:true}
         username: nacos
         password: nacos
       config:

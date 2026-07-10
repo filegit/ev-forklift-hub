@@ -107,7 +107,7 @@ for j in efh-gateway/target/*.jar efh-user/target/*.jar efh-community/target/*.j
   [ -f "$j" ] || continue
   name=$(basename "$j" .jar)
   pkill -f "$name" 2>/dev/null || true
-  nohup java -Xms256m -Xmx512m -jar "$j" > logs/$name.log 2>&1 &
+  nohup env NACOS_DISCOVERY_ENABLED=false java -Xms256m -Xmx512m -jar "$j" > logs/$name.log 2>&1 &
   echo "Started $j"
 done
 sleep 15
