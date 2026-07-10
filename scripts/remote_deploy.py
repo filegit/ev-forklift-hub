@@ -17,6 +17,10 @@ USER = "root"
 PASSWORD = os.environ.get("DEPLOY_PASSWORD")
 REMOTE_DIR = "/opt/ev-forklift-hub"
 LOCAL_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXCLUDES = {
+    ".git", ".idea", "node_modules", "dist", "target", "logs", "uploads",
+    "__pycache__", ".DS_Store"
+}
 
 INCLUDE = [
     "docker-compose.yml", "docker", "efh-web", "server-deploy.sh", "fix-host-db.sql",
@@ -32,7 +36,7 @@ def make_tarball():
         for item in INCLUDE:
             path = os.path.join(LOCAL_ROOT, item)
             if os.path.exists(path):
-                tar.add(path, arcname=item)
+                tar.add(path, arcname=item, filter=tar_filter)
         for mod in JAR_MODULES:
             tdir = os.path.join(LOCAL_ROOT, mod, "target")
             if not os.path.isdir(tdir):
@@ -42,6 +46,15 @@ def make_tarball():
                     full = os.path.join(tdir, f)
                     tar.add(full, arcname=f"{mod}/target/{f}")
     return tmp.name
+
+
+def tar_filter(info):
+    parts = info.name.replace("\\", "/").split("/")
+    if any(part in EXCLUDES for part in parts):
+        return None
+    if info.name.endswith(".tar.gz") or info.name.endswith(".zip"):
+        return None
+    return info
 
 
 def run_ssh(client, cmd, timeout=600):

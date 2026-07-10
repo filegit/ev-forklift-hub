@@ -10,10 +10,18 @@ public class ChatResponseVO {
     private String answer;
     private boolean llmUsed;
     private List<ChatSourceVO> sources = new ArrayList<>();
-    /** 会话ID，客户端下次请求带回 */
+
+    private String intent;
+    private double intentConfidence;
+    private List<String> plan = new ArrayList<>();
+    private List<String> stageEvents = new ArrayList<>();
+    private List<String> toolCalls = new ArrayList<>();
+
+    /** Conversation id for multi-turn memory. */
     private String sessionId;
-    /** 链路追踪ID，对应 agent_execution_log（问题10） */
+    /** Trace id matched with agent_execution_log. */
     private String traceId;
+
     private int promptTokens;
     private int completionTokens;
     private double costYuan;

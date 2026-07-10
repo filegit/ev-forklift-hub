@@ -10,11 +10,11 @@ export const sendChat = (data) => {
   })
 }
 
-/** SSE 流式对话 */
-export const sendChatStream = (data, onDelta, onDone, onError) => {
+export const sendChatStream = (data, handlers = {}) => {
   const userStore = JSON.parse(localStorage.getItem('user') || '{}')
   const token = userStore?.token
   const controller = new AbortController()
+
   fetch(apiUrl('/api/agent/api/agent/chat/stream'), {
     method: 'POST',
     headers: {
@@ -24,6 +24,9 @@ export const sendChatStream = (data, onDelta, onDone, onError) => {
     body: JSON.stringify(data),
     signal: controller.signal
   }).then(async (res) => {
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`)
+    }
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -34,16 +37,32 @@ export const sendChatStream = (data, onDelta, onDone, onError) => {
       const parts = buffer.split('\n\n')
       buffer = parts.pop()
       for (const part of parts) {
-        if (part.startsWith('data:')) {
-          onDelta && onDelta(part.replace(/^data:\s*/, ''))
-        }
-        if (part.startsWith('event: done')) {
-          const line = part.split('\n').find(l => l.startsWith('data:'))
-          onDone && onDone(line ? line.replace(/^data:\s*/, '') : '')
+        const lines = part.split('\n')
+        const eventLine = lines.find(line => line.startsWith('event:'))
+        const dataLines = lines.filter(line => line.startsWith('data:'))
+        const eventName = eventLine ? eventLine.replace(/^event:\s*/, '') : 'message'
+        const data = dataLines.map(line => line.replace(/^data:\s*/, '')).join('\n')
+
+        if (eventName === 'stage') {
+          handlers.onStage && handlers.onStage(data)
+        } else if (eventName === 'meta') {
+          try {
+            handlers.onMeta && handlers.onMeta(JSON.parse(data))
+          } catch (error) {
+            handlers.onMeta && handlers.onMeta(null)
+          }
+        } else if (eventName === 'done') {
+          handlers.onDone && handlers.onDone(data)
+        } else if (data) {
+          handlers.onDelta && handlers.onDelta(data)
         }
       }
     }
-  }).catch(onError)
+    handlers.onClose && handlers.onClose()
+  }).catch((error) => {
+    handlers.onError && handlers.onError(error)
+  })
+
   return () => controller.abort()
 }
 

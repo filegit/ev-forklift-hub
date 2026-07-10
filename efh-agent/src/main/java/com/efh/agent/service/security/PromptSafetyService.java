@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Prompt 安全与非法指令拦截（问题8）
+ * Input guardrail for prompt injection, risky commands, and raw PII.
  */
 @Slf4j
 @Service
@@ -18,12 +18,15 @@ public class PromptSafetyService {
 
     private static final Pattern[] INJECTION_PATTERNS = {
             Pattern.compile("ignore (all )?previous", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("忽略(以上|之前|先前)"),
             Pattern.compile("system prompt", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("你现在是(?!叉车)"),
+            Pattern.compile("developer message", Pattern.CASE_INSENSITIVE),
             Pattern.compile("(drop|delete|truncate)\\s+table", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("执行(系统|shell|命令)"),
+            Pattern.compile("忽略(以上|之前|先前|所有).*指令"),
+            Pattern.compile("不要遵守.*系统"),
+            Pattern.compile("泄露.*(系统提示|提示词|prompt)"),
+            Pattern.compile("执行(系统|shell|命令)")
     };
+    private static final Pattern ID_CARD = Pattern.compile("\\b\\d{17}[0-9Xx]\\b");
 
     @Autowired
     private AgentProperties agentProperties;
@@ -33,11 +36,14 @@ public class PromptSafetyService {
         if (question == null || question.trim().isEmpty()) {
             throw new SecurityException("问题不能为空");
         }
+        if (ID_CARD.matcher(question).find()) {
+            throw new SecurityException("检测到身份证等敏感个人信息，请脱敏后再提交。");
+        }
         String q = question.toLowerCase(Locale.ROOT);
         for (Pattern p : INJECTION_PATTERNS) {
             if (p.matcher(q).find()) {
-                log.warn("拦截可疑 Prompt: {}", question);
-                throw new SecurityException("检测到非法或越权指令，已拒绝处理");
+                log.warn("Blocked suspicious prompt: {}", question);
+                throw new SecurityException("检测到非法或越权指令，已拒绝处理。");
             }
         }
     }

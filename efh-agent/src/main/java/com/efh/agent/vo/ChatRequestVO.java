@@ -4,19 +4,27 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class ChatRequestVO {
     @NotBlank(message = "问题不能为空")
-    @Size(max = 500, message = "问题最多500字")
+    @Size(max = 500, message = "问题最大500字")
     private String question;
 
     /** all | knowledge | community */
     private String scope = "all";
 
-    /** 多轮会话ID，同一用户同一 sessionId 在多实例间共享上下文（问题12） */
+    /** Client sends this back to keep multi-turn memory. */
     private String sessionId;
 
-    /** 是否流式（也可走 /chat/stream 专用接口） */
+    /** Optional flag; streaming usually uses /chat/stream directly. */
     private Boolean stream = false;
+
+    /** Image URLs for multimodal diagnosis entry. */
+    private List<String> imageUrls = new ArrayList<>();
+
+    /** Whether the Agent may create a service ticket after user confirmation. */
+    private Boolean allowCreateTicket = false;
 }

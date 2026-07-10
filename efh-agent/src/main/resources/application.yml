@@ -13,11 +13,16 @@ spring:
 efh:
   user:
     url: ${EFH_USER_URI:http://127.0.0.1:8081}
+  parts:
+    url: ${EFH_PARTS_URI:http://127.0.0.1:8083}
+  service:
+    url: ${EFH_SERVICE_URI:http://127.0.0.1:8084}
   agent:
     knowledge-upload-dir: ${KNOWLEDGE_UPLOAD_DIR:./uploads/knowledge}
     max-chunks: 6
     max-chunk-chars: 900
     admin-user-type: 9
+    stage-events-enabled: true
     short-term-max-messages: 20
     context-token-limit: 3000
     session-lock-seconds: 5
@@ -59,6 +64,18 @@ efh:
     monitor:
       log-enabled: true
       metrics-enabled: true
+    langfuse:
+      enabled: ${LANGFUSE_ENABLED:false}
+      base-url: ${LANGFUSE_BASE_URL:}
+      public-key: ${LANGFUSE_PUBLIC_KEY:}
+      secret-key: ${LANGFUSE_SECRET_KEY:}
+    multimodal:
+      enabled: ${MULTIMODAL_ENABLED:false}
+      vision-model: ${VISION_MODEL:qwen-vl-plus}
+      max-images: 3
+    cache:
+      enabled: true
+      ttl-seconds: 300
     vector:
       enabled: true
       dimension: 128

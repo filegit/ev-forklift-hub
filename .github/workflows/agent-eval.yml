@@ -1,0 +1,44 @@
+name: Agent Build And Eval
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - name: Build efh-agent
+        run: mvn -pl efh-agent -am -DskipTests package
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: efh-web/package-lock.json
+      - name: Install dependencies
+        working-directory: efh-web
+        run: npm install
+      - name: Build web
+        working-directory: efh-web
+        run: npm run build
+
+  eval-format:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Agent eval cases
+        shell: pwsh
+        run: ./scripts/run-agent-eval.ps1 -FormatOnly

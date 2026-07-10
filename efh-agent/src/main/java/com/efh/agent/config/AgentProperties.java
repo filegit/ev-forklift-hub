@@ -16,6 +16,7 @@ public class AgentProperties {
     private int maxChunks = 6;
     private int maxChunkChars = 900;
     private int adminUserType = 9;
+    private boolean stageEventsEnabled = true;
 
     /** 短期记忆：Redis 中保留的最近消息轮数 */
     private int shortTermMaxMessages = 20;
@@ -29,6 +30,9 @@ public class AgentProperties {
     private Security security = new Security();
     private Monitor monitor = new Monitor();
     private Vector vector = new Vector();
+    private Langfuse langfuse = new Langfuse();
+    private Multimodal multimodal = new Multimodal();
+    private Cache cache = new Cache();
     private Datasource datasource = new Datasource();
 
     @Data
@@ -71,6 +75,27 @@ public class AgentProperties {
     public static class Monitor {
         private boolean logEnabled = true;
         private boolean metricsEnabled = true;
+    }
+
+    @Data
+    public static class Langfuse {
+        private boolean enabled = false;
+        private String baseUrl = "";
+        private String publicKey = "";
+        private String secretKey = "";
+    }
+
+    @Data
+    public static class Multimodal {
+        private boolean enabled = false;
+        private String visionModel = "qwen-vl-plus";
+        private int maxImages = 3;
+    }
+
+    @Data
+    public static class Cache {
+        private boolean enabled = true;
+        private int ttlSeconds = 300;
     }
 
     @Data
