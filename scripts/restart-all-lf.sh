@@ -2,11 +2,14 @@
 set -e
 cd /opt/ev-forklift-hub
 export MYSQL_HOST=127.0.0.1 MYSQL_PASSWORD=123456 REDIS_HOST=127.0.0.1 REDIS_PASSWORD=123456 NACOS_SERVER_ADDR=127.0.0.1:8848
-if [ -f .env.local ]; then
-  set -a
-  . ./.env.local
-  set +a
-fi
+for env_file in .env.local alipay.env sms.env; do
+  if [ -f "$env_file" ]; then
+    set -a
+    . "./$env_file"
+    set +a
+    echo "loaded $env_file"
+  fi
+done
 mkdir -p logs
 
 echo "[1/4] 启动 Docker 基础设施..."

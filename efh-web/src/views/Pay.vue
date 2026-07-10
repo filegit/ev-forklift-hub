@@ -23,7 +23,7 @@
 
         <el-alert
           v-if="payChannel === 'alipay' && !alipayReady"
-          title="支付宝暂未完成配置。生产环境需要配置 ALIPAY_ENABLED=true、应用私钥、公钥与回调地址。"
+          title="支付宝暂不可用，请稍后重试或联系管理员检查支付配置。"
           type="warning"
           :closable="false"
           show-icon
@@ -43,8 +43,8 @@
       </div>
 
       <aside class="pay-aside">
-        <h3>真实接入建议</h3>
-        <p>支付优先走支付宝官方沙箱和生产接口，无需购买额外套餐；物流先由仓库录入承运商和运单，成本最低且可上线。</p>
+        <h3>支付与履约进度</h3>
+        <p>支付接入支付宝官方接口，支付成功后订单进入待发货状态；仓库可录入承运商、运单号和物流轨迹。</p>
         <div class="efh-status-rail">
           <div class="efh-status-node active">
             <span>1</span>
@@ -119,9 +119,9 @@ const handlePay = async () => {
   try {
     const res = await createAlipayPagePay(detail.value.payment.payNo)
     submitAlipayForm(res.data.payForm)
-    return
   } catch (e) {
-    if (payChannel.value === 'alipay') {
+    const message = e?.message || ''
+    if (message.includes('支付宝未配置')) {
       alipayReady.value = false
     }
   } finally {

@@ -18,6 +18,14 @@ docker compose up -d --build 2>/dev/null || docker-compose up -d --build
 
 echo "=== 4. 启动 Java 微服务（若未 Docker 化）==="
 mkdir -p logs
+for env_file in .env.local alipay.env sms.env; do
+  if [ -f "$env_file" ]; then
+    set -a
+    . "./$env_file"
+    set +a
+    echo "loaded $env_file"
+  fi
+done
 for svc in gateway:8080 user:8081 community:8082 parts:8083 service:8084 knowledge:8085 agent:8086; do
   name="${svc%%:*}"
   port="${svc##*:}"

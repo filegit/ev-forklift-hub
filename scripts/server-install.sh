@@ -35,6 +35,14 @@ done
 echo "=== 启动 Java 微服务 ==="
 mkdir -p logs
 export MYSQL_HOST=127.0.0.1 MYSQL_PASSWORD=123456 REDIS_HOST=127.0.0.1 REDIS_PASSWORD=123456 NACOS_SERVER_ADDR=127.0.0.1:8848
+for env_file in .env.local alipay.env sms.env; do
+  if [ -f "$env_file" ]; then
+    set -a
+    . "./$env_file"
+    set +a
+    echo "loaded $env_file"
+  fi
+done
 
 start_jar() {
   local jar=$1

@@ -103,6 +103,14 @@ docker exec -i efh-mysql mysql -uroot -p123456 < fix-host-db.sql 2>/dev/null || 
 docker exec -i efh-mysql mysql -uroot -p123456 < docker/mysql/init/06-agent.sql 2>/dev/null || true
 # 启动 Java 微服务
 mkdir -p logs
+for env_file in .env.local alipay.env sms.env; do
+  if [ -f "$env_file" ]; then
+    set -a
+    . "./$env_file"
+    set +a
+    echo "Loaded $env_file"
+  fi
+done
 for j in efh-gateway/target/*.jar efh-user/target/*.jar efh-community/target/*.jar efh-parts/target/*.jar efh-service/target/*.jar efh-knowledge/target/*.jar efh-agent/target/*.jar; do
   [ -f "$j" ] || continue
   name=$(basename "$j" .jar)
