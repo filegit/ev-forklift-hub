@@ -40,16 +40,16 @@ public class OrderQueryTool implements AgentTool {
     public String execute(ToolContext ctx, Map<String, Object> args) {
         String orderNo = String.valueOf(args.getOrDefault("orderNo", args.getOrDefault("query", ""))).trim();
         if (orderNo.isEmpty()) {
-            return "订单查询失败：缺少订单号，请让用户提供 PO/PAY/ORD 开头的订单号。";
+            return "请提供 PO、PAY 或 ORD 开头的订单号，我才能继续查询支付和物流状态。";
         }
         try {
             Result<Map<String, Object>> result = partsFeignClient.getOrderByNo(String.valueOf(ctx.getUserId()), orderNo);
             if (result == null || result.getCode() != 200) {
-                return "订单查询失败：" + (result == null ? "订单服务无响应" : result.getMessage());
+                return "暂时没有查询到该订单状态。请确认订单号是否正确，或登录后到订单中心查看。";
             }
             return objectMapper.writeValueAsString(result.getData());
         } catch (Exception e) {
-            return "订单查询工具异常：" + e.getMessage() + "。请引导用户到订单中心查询或稍后重试。";
+            return "订单服务暂时不可用。请稍后重试，或者登录后到订单中心查看最新支付和物流状态。";
         }
     }
 }

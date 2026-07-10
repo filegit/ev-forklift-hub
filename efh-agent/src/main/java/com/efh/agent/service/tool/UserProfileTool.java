@@ -42,11 +42,11 @@ public class UserProfileTool implements AgentTool {
         try {
             Result<UserBriefDTO> result = userFeignClient.getUserBrief(String.valueOf(ctx.getUserId()));
             if (result == null || result.getCode() != 200) {
-                return "用户信息查询失败：" + (result == null ? "用户服务无响应" : result.getMessage());
+                return "暂时无法读取用户信息，请稍后重试。";
             }
             return objectMapper.writeValueAsString(result.getData());
         } catch (Exception e) {
-            return "用户信息工具异常：" + e.getMessage();
+            return "用户信息服务暂时不可用，请稍后重试。";
         }
     }
 }

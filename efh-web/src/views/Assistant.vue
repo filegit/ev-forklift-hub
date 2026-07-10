@@ -33,8 +33,8 @@
             <div class="bubble">
               <div class="msg-text" v-html="formatText(msg.content)"></div>
               <div v-if="msg.meta" class="answer-meta">
-                <el-tag size="small" effect="plain">{{ msg.meta.intent || 'GENERAL_QA' }}</el-tag>
-                <el-tag v-if="msg.meta.llmUsed === false" size="small" type="warning" effect="plain">兜底模式</el-tag>
+                <el-tag size="small" effect="plain">{{ intentLabel(msg.meta.intent) }}</el-tag>
+                <el-tag v-if="msg.meta.llmUsed === false" size="small" type="warning" effect="plain">检索回答</el-tag>
               </div>
               <div v-if="msg.sources && msg.sources.length" class="sources">
                 <div class="sources-title">参考来源</div>
@@ -101,14 +101,14 @@
           <div class="trace-title">规划步骤</div>
           <div v-if="lastPlan.length === 0" class="empty-trace">暂无计划</div>
           <el-tag v-for="step in lastPlan" :key="step" class="plan-tag" size="small" effect="plain">
-            {{ step }}
+            {{ planLabel(step) }}
           </el-tag>
         </div>
 
         <div class="trace-section">
           <div class="trace-title">工具调用</div>
           <div v-if="lastToolCalls.length === 0" class="empty-trace">暂无工具调用</div>
-          <div v-for="tool in lastToolCalls" :key="tool" class="tool-line">{{ tool }}</div>
+          <div v-for="tool in lastToolCalls" :key="tool" class="tool-line">{{ toolLabel(tool) }}</div>
         </div>
       </aside>
     </section>
@@ -211,13 +211,62 @@ const formatText = (text) => {
 }
 
 const sourceLabel = (type) => {
-  const map = { knowledge: '知识库', post: '帖子', comment: '评论', tool: '工具', tool_error: '异常', image: '图片' }
+  const map = { knowledge: '知识库', post: '帖子', comment: '评论', tool: '业务查询', image: '图片' }
   return map[type] || type
 }
 
 const sourceTagType = (type) => {
-  const map = { knowledge: 'success', post: 'primary', comment: 'info', tool: 'warning', tool_error: 'danger', image: 'info' }
+  const map = { knowledge: 'success', post: 'primary', comment: 'info', tool: 'warning', image: 'info' }
   return map[type] || 'info'
+}
+
+const intentLabel = (intent) => {
+  const map = {
+    GENERAL_QA: '综合问答',
+    KNOWLEDGE_QA: '知识问答',
+    ORDER_QUERY: '订单查询',
+    TICKET_CREATE: '工单协助',
+    USER_PROFILE: '用户服务',
+    HANDOFF: '人工协助',
+    MULTIMODAL_DIAGNOSIS: '图片诊断'
+  }
+  return map[intent] || '智能问答'
+}
+
+const planLabel = (step) => {
+  const map = {
+    SAFETY_CHECK: '安全检查',
+    TOOL_ORDER_QUERY: '查询订单',
+    TOOL_SERVICE_TICKET_CREATE: '创建工单',
+    TOOL_USER_PROFILE: '读取用户信息',
+    TOOL_KNOWLEDGE_SEARCH: '检索知识库',
+    TOOL_COMMUNITY_SEARCH: '检索社区',
+    TOOL_ENRICH: '补充检索',
+    RAG_ALL: '综合检索',
+    RAG_KNOWLEDGE: '知识库检索',
+    RAG_COMMUNITY: '社区检索',
+    PARALLEL_RAG_ALL: '并行检索',
+    VISION_ANALYSIS: '图片分析',
+    HANDOFF_TO_HUMAN: '转人工',
+    LLM_SYNTHESIS: '组织答案',
+    HALLUCINATION_GUARD: '事实复核',
+    SAVE_MEMORY: '保存上下文'
+  }
+  return map[step] || step
+}
+
+const toolLabel = (tool) => {
+  const map = {
+    order_query: '订单物流查询',
+    service_ticket_create: '售后工单创建',
+    user_profile_query: '用户信息查询',
+    knowledge_search: '知识库检索',
+    community_search: '社区检索'
+  }
+  const name = String(tool || '').replace(/\(.+\)$/, '')
+  const suffix = String(tool || '').match(/\((.+)\)$/)?.[1]
+  const suffixLabel = suffix === 'failed' ? '暂不可用' : suffix
+  return suffixLabel ? `${map[name] || name}（${suffixLabel}）` : (map[name] || tool)
 }
 
 const goSource = (source) => {
@@ -261,8 +310,8 @@ const handleSend = async () => {
 
   abortStream = sendChatStream(payload, {
     onStage: async (stage) => {
-      currentStage.value = stage
-      stageEvents.value.push(stage)
+      currentStage.value = stageEventLabel(stage)
+      stageEvents.value.push(stageEventLabel(stage))
       await scrollToBottom()
     },
     onDelta: async (delta) => {
@@ -300,12 +349,38 @@ const applyResponseMeta = (data, assistantMsg) => {
       localStorage.removeItem(oldKey)
     }
   }
-  assistantMsg.sources = data.sources || []
+  assistantMsg.sources = (data.sources || []).filter(source => source.type !== 'tool_error')
   assistantMsg.meta = { intent: data.intent, llmUsed: data.llmUsed }
-  stageEvents.value = data.stageEvents || stageEvents.value
+  stageEvents.value = (data.stageEvents || stageEvents.value).map(stageEventLabel)
   lastPlan.value = data.plan || []
   lastToolCalls.value = data.toolCalls || []
   saveLocalHistory()
+}
+
+const stageEventLabel = (stage) => {
+  if (!stage) return ''
+  return String(stage)
+    .replace(/ORDER_QUERY/g, '订单查询')
+    .replace(/TICKET_CREATE/g, '工单协助')
+    .replace(/USER_PROFILE/g, '用户服务')
+    .replace(/GENERAL_QA/g, '综合问答')
+    .replace(/KNOWLEDGE_QA/g, '知识问答')
+    .replace(/MULTIMODAL_DIAGNOSIS/g, '图片诊断')
+    .replace(/HANDOFF/g, '人工协助')
+    .replace(/TOOL_ORDER_QUERY/g, '查询订单')
+    .replace(/TOOL_SERVICE_TICKET_CREATE/g, '创建工单')
+    .replace(/TOOL_USER_PROFILE/g, '读取用户信息')
+    .replace(/TOOL_KNOWLEDGE_SEARCH/g, '检索知识库')
+    .replace(/TOOL_COMMUNITY_SEARCH/g, '检索社区')
+    .replace(/TOOL_ENRICH/g, '补充检索')
+    .replace(/LLM_SYNTHESIS/g, '组织答案')
+    .replace(/HALLUCINATION_GUARD/g, '事实复核')
+    .replace(/SAVE_MEMORY/g, '保存上下文')
+    .replace(/RAG_ALL/g, '综合检索')
+    .replace(/RAG_KNOWLEDGE/g, '知识库检索')
+    .replace(/RAG_COMMUNITY/g, '社区检索')
+    .replace(/PARALLEL_RAG_ALL/g, '并行检索')
+    .replace(/VISION_ANALYSIS/g, '图片分析')
 }
 
 const fallbackSend = async (payload, assistantMsg) => {

@@ -40,7 +40,7 @@ public class ServiceTicketCreateTool implements AgentTool {
         String phone = String.valueOf(args.getOrDefault("phone", "")).trim();
         String address = String.valueOf(args.getOrDefault("address", "")).trim();
         if (description.isEmpty()) {
-            return "工单创建失败：缺少问题描述。";
+            return "还需要补充具体故障现象或服务需求，我才能帮你整理售后工单。";
         }
         if (phone.isEmpty() || address.isEmpty()) {
             return "工单暂未创建：还需要用户补充联系电话和上门地址。";
@@ -55,11 +55,11 @@ public class ServiceTicketCreateTool implements AgentTool {
         try {
             Result<Object> result = serviceFeignClient.createOrder(String.valueOf(ctx.getUserId()), body);
             if (result == null || result.getCode() != 200) {
-                return "工单创建失败：" + (result == null ? "维修服务无响应" : result.getMessage());
+                return "工单暂时没有创建成功，请稍后重试，或者联系人工客服处理。";
             }
             return "工单已创建成功，售后人员会根据联系方式和地址跟进。";
         } catch (Exception e) {
-            return "工单创建工具异常：" + e.getMessage() + "。请引导用户稍后重试或联系人工客服。";
+            return "工单服务暂时不可用，请稍后重试，或者联系人工客服处理。";
         }
     }
 

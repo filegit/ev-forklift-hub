@@ -246,9 +246,9 @@ public class LlmClient {
 
     String buildFallbackAnswer(String question, List<RagChunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
-            return "未找到与“" + question + "”相关的资料，请换关键词，或到社区发布问题。";
+            return "暂时没有检索到与“" + question + "”直接相关的资料。你可以换一个更具体的关键词，或者到社区发布问题让售后同事补充经验。";
         }
-        StringBuilder sb = new StringBuilder("【检索摘要模式】\n\n");
+        StringBuilder sb = new StringBuilder("根据已检索到的资料，可以先参考下面内容：\n\n");
         int i = 1;
         for (RagChunk chunk : chunks) {
             sb.append(i++).append(". ").append(chunk.getTitle()).append("\n")

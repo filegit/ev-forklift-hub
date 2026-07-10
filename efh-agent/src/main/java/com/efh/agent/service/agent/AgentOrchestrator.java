@@ -129,9 +129,13 @@ public class AgentOrchestrator {
 
             String scope = request.getScope() == null ? "all" : request.getScope();
             long t4 = System.currentTimeMillis();
-            List<RagChunk> chunks = parallelRetrieve(request.getQuestion(), userId, scope, plan);
+            List<RagChunk> chunks = shouldRetrieveBeforeTools(plan)
+                    ? parallelRetrieve(request.getQuestion(), userId, scope, plan)
+                    : new ArrayList<>();
             executionLogService.logStep(toolCtx, "RAG", "RagAgent", null, request.getQuestion(), "chunks=" + chunks.size(), System.currentTimeMillis() - t4, true, null);
-            addStage(stageEvents, "检索中", "找到 " + chunks.size() + " 条候选资料");
+            addStage(stageEvents, "检索中", shouldRetrieveBeforeTools(plan)
+                    ? "找到 " + chunks.size() + " 条候选资料"
+                    : "当前问题优先进行业务查询");
 
             if (hasImages(request)) {
                 chunks.add(buildImageChunk(request));
@@ -203,8 +207,12 @@ public class AgentOrchestrator {
                 sendStage(emitter, "规划步骤", String.join(" -> ", plan));
 
                 String scope = request.getScope() == null ? "all" : request.getScope();
-                List<RagChunk> chunks = parallelRetrieve(request.getQuestion(), userId, scope, plan);
-                addStage(stageEvents, "检索中", "找到 " + chunks.size() + " 条资料");
+                List<RagChunk> chunks = shouldRetrieveBeforeTools(plan)
+                        ? parallelRetrieve(request.getQuestion(), userId, scope, plan)
+                        : new ArrayList<>();
+                addStage(stageEvents, "检索中", shouldRetrieveBeforeTools(plan)
+                        ? "找到 " + chunks.size() + " 条资料"
+                        : "当前问题优先进行业务查询");
                 if (hasImages(request)) {
                     chunks.add(buildImageChunk(request));
                     addStage(stageEvents, "图片理解", "已接收图片上下文");
@@ -258,6 +266,16 @@ public class AgentOrchestrator {
         return ragRetrievalService.retrieve(question, userId, scope);
     }
 
+    private boolean shouldRetrieveBeforeTools(List<String> plan) {
+        return plan.contains("RAG_ALL")
+                || plan.contains("RAG_KNOWLEDGE")
+                || plan.contains("RAG_COMMUNITY")
+                || plan.contains("PARALLEL_RAG_ALL")
+                || plan.contains("TOOL_KNOWLEDGE_SEARCH")
+                || plan.contains("TOOL_COMMUNITY_SEARCH")
+                || plan.contains("TOOL_ENRICH");
+    }
+
     private void executePlannedTools(ToolContext ctx, ChatRequestVO request, List<String> plan,
                                      List<RagChunk> chunks, List<String> toolCalls, List<String> stageEvents) {
         if (plan.contains("TOOL_ORDER_QUERY")) {
@@ -289,11 +307,11 @@ public class AgentOrchestrator {
         try {
             String result = toolExecutor.execute(toolName, ctx, args);
             toolCalls.add(toolName + "(" + (System.currentTimeMillis() - start) + "ms)");
-            addStage(stageEvents, "工具调用", toolName + " 执行完成");
+            addStage(stageEvents, "业务查询", displayToolName(toolName) + "完成");
             if (result != null && !result.trim().isEmpty()) {
                 RagChunk c = new RagChunk();
                 c.setType("tool");
-                c.setTitle("工具结果: " + toolName);
+                c.setTitle(displayToolName(toolName));
                 c.setContent(result);
                 c.setScore(0.65);
                 c.setUnlocked(true);
@@ -301,15 +319,54 @@ public class AgentOrchestrator {
             }
         } catch (Exception e) {
             toolCalls.add(toolName + "(failed)");
-            addStage(stageEvents, "工具异常", toolName + ": " + e.getMessage());
+            addStage(stageEvents, "业务查询", displayToolName(toolName) + "暂时不可用，已改用资料检索回答");
             RagChunk c = new RagChunk();
-            c.setType("tool_error");
-            c.setTitle("工具异常: " + toolName);
-            c.setContent(e.getMessage());
-            c.setScore(0.2);
+            c.setType("tool");
+            c.setTitle(displayToolName(toolName));
+            c.setContent(publicToolFailureMessage(toolName, e));
+            c.setScore(0.45);
             c.setUnlocked(true);
             chunks.add(c);
         }
+    }
+
+    private String publicToolFailureMessage(String toolName, Exception e) {
+        String message = e == null ? "" : String.valueOf(e.getMessage());
+        if (message.contains("需要登录")) {
+            if ("order_query".equals(toolName)) {
+                return "订单、支付和物流信息需要登录后查询。请先登录账号，再提供 PO、PAY 或 ORD 开头的订单号。";
+            }
+            if ("service_ticket_create".equals(toolName)) {
+                return "创建售后工单需要登录后操作。请先登录，并补充联系电话、上门地址和故障描述。";
+            }
+            return "该业务信息需要登录后查看。请先登录账号再继续。";
+        }
+        if ("order_query".equals(toolName)) {
+            return "订单服务暂时不可用。请稍后重试，或者登录后到订单中心查看最新支付和物流状态。";
+        }
+        if ("service_ticket_create".equals(toolName)) {
+            return "工单服务暂时不可用。请稍后重试，或者联系人工客服处理。";
+        }
+        return displayToolName(toolName) + "暂时不可用，请稍后重试。";
+    }
+
+    private String displayToolName(String toolName) {
+        if ("order_query".equals(toolName)) {
+            return "订单物流查询";
+        }
+        if ("service_ticket_create".equals(toolName)) {
+            return "售后工单创建";
+        }
+        if ("user_profile_query".equals(toolName)) {
+            return "用户信息查询";
+        }
+        if ("knowledge_search".equals(toolName)) {
+            return "知识库检索";
+        }
+        if ("community_search".equals(toolName)) {
+            return "社区检索";
+        }
+        return toolName;
     }
 
     private boolean hasImages(ChatRequestVO request) {
