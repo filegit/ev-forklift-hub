@@ -98,6 +98,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return passWithOptionalAuth(exchange, chain);
         }
 
+        // Agent 历史会话：可选认证，匿名用户也可以恢复自己的本机 sessionId 对话
+        if ("GET".equals(request.getMethod().name()) && path.matches("/agent/api/agent/chat/history/[A-Za-z0-9_-]+")) {
+            return passWithOptionalAuth(exchange, chain);
+        }
+
         // 2. 获取请求头中的 Authorization Token
         String token = request.getHeaders().getFirst("Authorization");
         if (token == null || token.isEmpty()) {
