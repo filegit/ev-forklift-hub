@@ -7,6 +7,8 @@ const routes = [
     component: () => import('@/layouts/MainLayout.vue'),
     children: [
       { path: '', name: 'Home', component: () => import('@/views/Home.vue') },
+      { path: 'mobile', name: 'MobileEntry', component: () => import('@/views/MobileEntry.vue') },
+      { path: 'battery-care', name: 'BatteryCare', component: () => import('@/views/BatteryCare.vue') },
       { path: 'post/:id', name: 'PostDetail', component: () => import('@/views/PostDetail.vue') },
       { path: 'parts', name: 'Parts', component: () => import('@/views/Parts.vue') },
       { path: 'parts/admin', name: 'PartsAdmin', component: () => import('@/views/PartsAdmin.vue'), meta: { requiresAuth: true } },

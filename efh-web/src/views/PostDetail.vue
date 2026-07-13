@@ -1,15 +1,15 @@
 <template>
   <div class="post-detail">
+    <EfhBackBar title="帖子详情" fallback="/" />
+
     <el-card class="post-card" v-loading="loading">
       <div class="post-header">
         <h1 class="post-title">{{ post.title }}</h1>
-        <el-tag :type="getCategoryType(post.category)">
-          {{ getCategoryName(post.category) }}
-        </el-tag>
+        <el-tag :type="getCategoryType(post.category)">{{ getCategoryName(post.category) }}</el-tag>
       </div>
 
       <div class="post-meta">
-        <span>{{ t('post.publishTime') }}：{{ formatTime(post.createTime) }}</span>
+        <span>发布时间：{{ formatTime(post.createTime) }}</span>
         <div class="post-stats">
           <span><el-icon><View /></el-icon> {{ post.viewCount || 0 }}</span>
           <span><el-icon><ChatDotRound /></el-icon> {{ post.commentCount || 0 }}</span>
@@ -18,50 +18,34 @@
       </div>
 
       <el-divider />
-
       <div class="post-content">{{ post.content }}</div>
 
       <div class="post-actions">
-        <el-button
-          :type="isLiked ? 'primary' : 'default'"
-          @click="handleLike"
-          :disabled="!userStore.token"
-        >
+        <el-button :type="isLiked ? 'primary' : 'default'" :disabled="!userStore.token" @click="handleLike">
           <el-icon><Pointer /></el-icon>
-          {{ isLiked ? t('post.liked') : t('post.like') }} ({{ post.likeCount || 0 }})
+          {{ isLiked ? '已点赞' : '点赞' }} ({{ post.likeCount || 0 }})
         </el-button>
-
-        <el-button
-          :type="isCollected ? 'primary' : 'default'"
-          @click="handleCollection"
-          :disabled="!userStore.token"
-        >
+        <el-button :type="isCollected ? 'primary' : 'default'" :disabled="!userStore.token" @click="handleCollection">
           <el-icon><Star /></el-icon>
-          {{ isCollected ? t('post.collected') : t('post.collect') }}
+          {{ isCollected ? '已收藏' : '收藏' }}
         </el-button>
       </div>
     </el-card>
 
     <el-card class="comment-card">
       <div class="comment-title-row">
-        <h3>{{ t('post.comments') }} ({{ flatComments.length }})</h3>
+        <h3>评论 ({{ flatComments.length }})</h3>
       </div>
 
       <div class="comment-input" v-if="userStore.token">
-        <el-input
-          v-model="commentContent"
-          type="textarea"
-          :rows="3"
-          :placeholder="t('post.writeComment')"
-        />
-        <el-button type="primary" @click="handleComment" :loading="commenting">
-          {{ t('post.publishComment') }}
-        </el-button>
+        <ImageUploadPreview button-text="上传工况图片预览" @change="commentImages = $event" />
+        <el-input v-model="commentContent" type="textarea" :rows="3" placeholder="写下你的工况、选型或维修经验" />
+        <el-button type="primary" :loading="commenting" @click="handleComment">发表评论</el-button>
       </div>
       <el-alert v-else type="info" :closable="false">
         <template #title>
-          {{ t('post.loginToComment') }}
-          <router-link to="/login">{{ t('common.login') }}</router-link>
+          登录后可以参与评论，
+          <router-link to="/login">去登录</router-link>
         </template>
       </el-alert>
 
@@ -83,8 +67,7 @@
           @submit-reply="handleReply"
           @update-reply-content="replyContent = $event"
         />
-
-        <el-empty v-if="commentTree.length === 0" :description="t('post.noComments')" />
+        <EfhEmptyState v-if="commentTree.length === 0" title="暂无评论" description="可以上传工况图片并补充文字说明。" />
       </div>
     </el-card>
   </div>
@@ -99,20 +82,22 @@ import { getPostDetail } from '@/api/post'
 import { getCommentList, createComment, deleteComment } from '@/api/comment'
 import { likePost, checkPostLike, likeComment, checkCommentLike } from '@/api/like'
 import { collectPost, checkCollection } from '@/api/collection'
-import { useI18n } from '@/i18n'
 import CommentThread from '@/components/CommentThread.vue'
+import EfhBackBar from '@/components/EfhBackBar.vue'
+import EfhEmptyState from '@/components/EfhEmptyState.vue'
+import ImageUploadPreview from '@/components/ImageUploadPreview.vue'
 import { ChatDotRound, Pointer, Star, View } from '@element-plus/icons-vue'
+import { formatDateTime, getPostCategory } from '@/utils/format'
 
 const route = useRoute()
 const userStore = useUserStore()
-const { t, locale } = useI18n()
-
 const loading = ref(false)
 const commenting = ref(false)
 const replySubmitting = ref(false)
 const post = ref({})
 const flatComments = ref([])
 const commentContent = ref('')
+const commentImages = ref([])
 const replyContent = ref('')
 const activeReplyId = ref(null)
 const isLiked = ref(false)
@@ -125,17 +110,12 @@ const buildCommentTree = (comments) => {
   const nodes = comments.map(item => ({ ...item, children: [] }))
   const map = new Map(nodes.map(item => [String(item.id), item]))
   const roots = []
-
   nodes.forEach(item => {
     const parentId = item.parentId == null ? '0' : String(item.parentId)
     const parent = parentId !== '0' ? map.get(parentId) : null
-    if (parent) {
-      parent.children.push(item)
-    } else {
-      roots.push(item)
-    }
+    if (parent) parent.children.push(item)
+    else roots.push(item)
   })
-
   const sortReplies = (items, root = false) => {
     items.sort((a, b) => {
       const av = new Date(a.createTime || 0).getTime()
@@ -163,7 +143,7 @@ const fetchPostDetail = async () => {
     const res = await getPostDetail(route.params.id)
     post.value = res.data || {}
   } catch (error) {
-    ElMessage.error(t('post.fetchPostFailed'))
+    ElMessage.error('获取帖子详情失败')
   } finally {
     loading.value = false
   }
@@ -175,28 +155,20 @@ const fetchCommentList = async () => {
     flatComments.value = res.data?.records || []
     await checkCommentLikes()
   } catch (error) {
-    ElMessage.error(t('post.fetchCommentsFailed'))
+    ElMessage.error('获取评论失败')
   }
 }
 
 const checkLikeStatus = async () => {
   if (!userStore.token) return
-  try {
-    const res = await checkPostLike(route.params.id)
-    isLiked.value = !!res.data
-  } catch (error) {
-    console.error(error)
-  }
+  const res = await checkPostLike(route.params.id)
+  isLiked.value = !!res.data
 }
 
 const checkCollectionStatus = async () => {
   if (!userStore.token) return
-  try {
-    const res = await checkCollection(route.params.id)
-    isCollected.value = !!res.data
-  } catch (error) {
-    console.error(error)
-  }
+  const res = await checkCollection(route.params.id)
+  isCollected.value = !!res.data
 }
 
 const checkCommentLikes = async () => {
@@ -207,51 +179,40 @@ const checkCommentLikes = async () => {
       const res = await checkCommentLike(comment.id)
       if (res.data) next.add(comment.id)
     } catch (error) {
-      console.error(error)
+      // optional
     }
   }
   commentLikes.value = next
 }
 
 const handleLike = async () => {
-  try {
-    await likePost(route.params.id)
-    isLiked.value = !isLiked.value
-    post.value.likeCount = (post.value.likeCount || 0) + (isLiked.value ? 1 : -1)
-    ElMessage.success(isLiked.value ? t('post.liked') : t('post.like'))
-  } catch (error) {
-    // handled by interceptor
-  }
+  await likePost(route.params.id)
+  isLiked.value = !isLiked.value
+  post.value.likeCount = Math.max(0, (post.value.likeCount || 0) + (isLiked.value ? 1 : -1))
 }
 
 const handleCollection = async () => {
-  try {
-    await collectPost(route.params.id)
-    isCollected.value = !isCollected.value
-    ElMessage.success(isCollected.value ? t('post.collected') : t('post.collect'))
-  } catch (error) {
-    // handled by interceptor
-  }
+  await collectPost(route.params.id)
+  isCollected.value = !isCollected.value
+}
+
+const buildCommentContent = (content) => {
+  if (!commentImages.value.length) return content
+  return `${content}\n\n工况图片：\n${commentImages.value.map(item => item.name).join('\n')}`
 }
 
 const handleComment = async () => {
   if (!commentContent.value.trim()) {
-    ElMessage.warning(t('post.commentRequired'))
+    ElMessage.warning('请输入评论内容')
     return
   }
   commenting.value = true
   try {
-    await createComment({
-      postId: route.params.id,
-      content: commentContent.value.trim(),
-      parentId: 0
-    })
-    ElMessage.success(t('post.commentSuccess'))
+    await createComment({ postId: route.params.id, content: buildCommentContent(commentContent.value.trim()), parentId: 0 })
     commentContent.value = ''
+    commentImages.value = []
     post.value.commentCount = (post.value.commentCount || 0) + 1
     await fetchCommentList()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     commenting.value = false
   }
@@ -269,83 +230,47 @@ const cancelReply = () => {
 
 const handleReply = async (comment) => {
   if (!replyContent.value.trim()) {
-    ElMessage.warning(t('post.commentRequired'))
+    ElMessage.warning('请输入回复内容')
     return
   }
   replySubmitting.value = true
   try {
-    await createComment({
-      postId: route.params.id,
-      content: replyContent.value.trim(),
-      parentId: comment.id
-    })
-    ElMessage.success(t('post.replySuccess'))
+    await createComment({ postId: route.params.id, content: replyContent.value.trim(), parentId: comment.id })
     cancelReply()
     post.value.commentCount = (post.value.commentCount || 0) + 1
     await fetchCommentList()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     replySubmitting.value = false
   }
 }
 
 const handleCommentLike = async (commentId) => {
-  try {
-    await likeComment(commentId)
-    const comment = findComment(commentTree.value, commentId)
-    const next = new Set(commentLikes.value)
-    if (next.has(commentId)) {
-      next.delete(commentId)
-      if (comment) comment.likeCount = Math.max(0, (comment.likeCount || 0) - 1)
-    } else {
-      next.add(commentId)
-      if (comment) comment.likeCount = (comment.likeCount || 0) + 1
-    }
-    commentLikes.value = next
-  } catch (error) {
-    // handled by interceptor
+  await likeComment(commentId)
+  const comment = findComment(commentTree.value, commentId)
+  const next = new Set(commentLikes.value)
+  if (next.has(commentId)) {
+    next.delete(commentId)
+    if (comment) comment.likeCount = Math.max(0, (comment.likeCount || 0) - 1)
+  } else {
+    next.add(commentId)
+    if (comment) comment.likeCount = (comment.likeCount || 0) + 1
   }
+  commentLikes.value = next
 }
 
 const handleDeleteComment = async (id) => {
-  try {
-    await ElMessageBox.confirm(t('post.deleteConfirm'), t('post.deleteTitle'), {
-      confirmButtonText: t('common.confirm'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning'
-    })
-
-    await deleteComment(id)
-    ElMessage.success(t('post.deleteSuccess'))
-    post.value.commentCount = Math.max(0, (post.value.commentCount || 0) - 1)
-    await fetchCommentList()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error(t('post.deleteFailed'))
-    }
-  }
+  await ElMessageBox.confirm('确定删除该评论吗？', '删除评论', { type: 'warning' })
+  await deleteComment(id)
+  post.value.commentCount = Math.max(0, (post.value.commentCount || 0) - 1)
+  await fetchCommentList()
 }
 
-const getCategoryName = (category) => {
-  const map = { 1: t('post.tech'), 2: t('post.trouble'), 3: t('post.experience'), 4: t('post.other') }
-  return map[category] || t('common.unknown')
-}
-
-const getCategoryType = (category) => {
-  const map = { 1: 'primary', 2: 'warning', 3: 'success', 4: 'info' }
-  return map[category] || 'info'
-}
-
-const formatTime = (time) => {
-  if (!time) return '-'
-  return new Date(time).toLocaleString(locale.value === 'en' ? 'en-US' : 'zh-CN', { hour12: false })
-}
+const getCategoryName = (category) => getPostCategory(category).label
+const getCategoryType = (category) => getPostCategory(category).type
+const formatTime = (time) => formatDateTime(time)
 
 onMounted(async () => {
-  if (userStore.token && !userStore.userInfo) {
-    await userStore.fetchUserInfo()
-  }
+  if (userStore.token && !userStore.userInfo) await userStore.fetchUserInfo()
   fetchPostDetail()
   fetchCommentList()
   checkLikeStatus()
@@ -432,33 +357,19 @@ onMounted(async () => {
   align-self: flex-end;
 }
 
-.comment-list {
-  margin-top: 8px;
-}
-
 @media (max-width: 768px) {
-  .post-header {
+  .post-header,
+  .post-meta {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
 
   .post-title {
     font-size: 20px;
   }
 
-  .post-meta {
-    flex-direction: column;
-    gap: 8px;
-  }
-
   .post-actions {
     flex-wrap: wrap;
-  }
-
-  .post-actions .el-button {
-    flex: 1;
-    min-width: 120px;
   }
 }
 </style>

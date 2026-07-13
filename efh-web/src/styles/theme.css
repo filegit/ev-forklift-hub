@@ -402,6 +402,18 @@ body {
   justify-content: center;
 }
 
+.el-loading-mask {
+  border-radius: 8px;
+}
+
+.efh-page-placeholder {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--efh-text-muted);
+}
+
 @media (max-width: 900px) {
   .efh-metric-grid,
   .efh-status-rail {

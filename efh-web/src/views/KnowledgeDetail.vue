@@ -1,6 +1,6 @@
 <template>
   <div class="detail-page" v-loading="loading">
-    <el-page-header @back="$router.push('/knowledge')" :content="t('knowledge.detail')" />
+    <EfhBackBar title="知识库详情" fallback="/knowledge" />
 
     <el-card v-if="doc" class="detail-card">
       <div class="doc-header">
@@ -20,7 +20,7 @@
       <div class="stats">
         <span>{{ doc.viewCount || 0 }} {{ t('knowledge.views') }}</span>
         <span>{{ doc.downloadCount || 0 }} {{ t('knowledge.downloads') }}</span>
-        <span>{{ t('knowledge.uploader') }} {{ formatDate(doc.createTime) }}</span>
+        <span>发布时间 {{ formatDate(doc.createTime) }}</span>
       </div>
 
       <el-divider />
@@ -115,6 +115,7 @@ import {
 } from '@/api/knowledge'
 import { getUserPoints } from '@/api/points'
 import { useI18n } from '@/i18n'
+import EfhBackBar from '@/components/EfhBackBar.vue'
 
 const route = useRoute()
 const userStore = useUserStore()

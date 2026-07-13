@@ -143,12 +143,18 @@
           <el-input v-model="postForm.title" :placeholder="t('post.titlePlaceholder')" />
         </el-form-item>
         <el-form-item :label="t('post.category')">
-          <el-select v-model="postForm.category" :placeholder="t('post.category')" style="width: 100%">
-            <el-option :label="t('post.tech')" :value="1" />
-            <el-option :label="t('post.trouble')" :value="2" />
-            <el-option :label="t('post.experience')" :value="3" />
-            <el-option :label="t('post.other')" :value="4" />
-          </el-select>
+          <el-radio-group v-model="postForm.category" class="post-category-radios">
+            <el-radio-button
+              v-for="item in publishCategories"
+              :key="item.value"
+              :label="item.value"
+            >
+              {{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="工况图片">
+          <ImageUploadPreview button-text="选择图片预览" @change="postImages = $event" />
         </el-form-item>
         <el-form-item :label="t('post.content')">
           <el-input
@@ -174,9 +180,11 @@ import { useUserStore } from '@/stores/user'
 import { createPost } from '@/api/post'
 import { getCartCount } from '@/api/parts'
 import { ElMessage } from 'element-plus'
-import { Menu, House, ShoppingBag, Reading, ChatDotRound, User, Switch, Van, ShoppingCart, Edit } from '@element-plus/icons-vue'
+import { Menu, House, ShoppingBag, Reading, ChatDotRound, User, Switch, Van, ShoppingCart, Edit, Tools } from '@element-plus/icons-vue'
 import { useMobile } from '@/composables/useMobile'
 import { useI18n } from '@/i18n'
+import { postCategories } from '@/utils/format'
+import ImageUploadPreview from '@/components/ImageUploadPreview.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -202,17 +210,16 @@ const activeMenu = computed(() => {
 })
 
 const navItems = computed(() => [
-  { path: '/', label: t('common.community') },
+  { path: '/service', label: t('common.service') },
   { path: '/parts', label: t('common.parts') },
-  { path: '/knowledge', label: t('common.knowledge') },
-  { path: '/assistant', label: t('common.assistant') },
-  { path: '/service', label: t('common.service') }
+  { path: '/', label: t('common.community') },
+  { path: '/assistant', label: t('common.assistant') }
 ])
 
 const tabItems = computed(() => [
-  { path: '/', label: t('common.home'), icon: House },
+  { path: '/service', label: t('common.service'), icon: Tools },
   { path: '/parts', label: t('common.parts'), icon: ShoppingBag },
-  { path: '/knowledge', label: t('common.knowledge'), icon: Reading },
+  { path: '/', label: t('common.community'), icon: House },
   { path: '/assistant', label: 'AI', icon: ChatDotRound },
   { path: '/profile', label: t('common.mine'), icon: User }
 ])
@@ -220,6 +227,8 @@ const tabItems = computed(() => [
 const showPostDialog = ref(false)
 const cartCount = ref(0)
 const postForm = ref({ title: '', content: '', category: 1 })
+const postImages = ref([])
+const publishCategories = postCategories.filter(item => item.value > 0)
 
 const isTabActive = (path) => {
   if (path === '/') return route.path === '/'
@@ -267,10 +276,14 @@ const handlePublishPost = async () => {
     return
   }
   try {
-    await createPost(postForm.value)
+    const imageText = postImages.value.length
+      ? `\n\n工况图片：\n${postImages.value.map(item => item.name).join('\n')}`
+      : ''
+    await createPost({ ...postForm.value, content: `${postForm.value.content}${imageText}` })
     ElMessage.success(t('post.publishSuccess'))
     showPostDialog.value = false
     postForm.value = { title: '', content: '', category: 1 }
+    postImages.value = []
     router.push('/')
   } catch (error) {
     console.error(error)
@@ -427,6 +440,11 @@ onMounted(loadCartCount)
 .drawer-actions {
   padding: 16px 4px;
   margin-top: 8px;
+}
+
+.post-category-radios {
+  flex-wrap: wrap !important;
+  gap: 8px;
 }
 </style>
 
