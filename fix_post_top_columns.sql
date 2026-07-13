@@ -1,0 +1,31 @@
+USE efh_community_0;
+
+SET @db := 'efh_community_0';
+SET @tbl := 'post_0';
+
+SET @sql := IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME=@tbl AND COLUMN_NAME='is_top') = 0,
+  'ALTER TABLE post_0 ADD COLUMN is_top TINYINT DEFAULT 0 COMMENT ''是否置顶：0-否，1-是''',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME=@tbl AND COLUMN_NAME='top_time') = 0,
+  'ALTER TABLE post_0 ADD COLUMN top_time DATETIME DEFAULT NULL COMMENT ''置顶时间''',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=@db AND TABLE_NAME=@tbl AND INDEX_NAME='idx_top_time') = 0,
+  'ALTER TABLE post_0 ADD INDEX idx_top_time (is_top, top_time)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

@@ -1,6 +1,6 @@
 <template>
   <div class="post-detail">
-    <EfhBackBar title="帖子详情" fallback="/" />
+    <EfhBackBar title="帖子详情" fallback="/community" />
 
     <el-card class="post-card" v-loading="loading">
       <div class="post-header">

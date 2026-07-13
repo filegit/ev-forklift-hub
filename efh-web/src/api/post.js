@@ -34,6 +34,14 @@ export const likePost = (id) => {
   })
 }
 
+export const setPostTop = (id, top = true) => {
+  return request({
+    url: `/community/api/post/${id}/top`,
+    method: 'post',
+    params: { top }
+  })
+}
+
 export const getMyPosts = (params) => {
   return request({
     url: '/community/api/post/my',

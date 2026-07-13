@@ -16,7 +16,7 @@ public interface PostService extends IService<Post> {
     /**
      * 帖子列表
      */
-    IPage<Post> getPostList(Page<Post> page, Integer category);
+    IPage<Post> getPostList(Page<Post> page, Integer category, String categoryGroup);
     
     /**
      * 帖子详情
@@ -32,4 +32,9 @@ public interface PostService extends IService<Post> {
      * 我的帖子
      */
     IPage<Post> getMyPosts(Long userId, Page<Post> page);
+
+    /**
+     * 设置或取消置顶
+     */
+    void setTop(Long userId, Long postId, Boolean top);
 }

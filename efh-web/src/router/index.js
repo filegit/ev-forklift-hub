@@ -7,6 +7,7 @@ const routes = [
     component: () => import('@/layouts/MainLayout.vue'),
     children: [
       { path: '', name: 'Home', component: () => import('@/views/Home.vue') },
+      { path: 'community', name: 'Community', component: () => import('@/views/Community.vue') },
       { path: 'mobile', name: 'MobileEntry', component: () => import('@/views/MobileEntry.vue') },
       { path: 'battery-care', name: 'BatteryCare', component: () => import('@/views/BatteryCare.vue') },
       { path: 'post/:id', name: 'PostDetail', component: () => import('@/views/PostDetail.vue') },

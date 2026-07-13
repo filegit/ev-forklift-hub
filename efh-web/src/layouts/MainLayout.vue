@@ -143,15 +143,23 @@
           <el-input v-model="postForm.title" :placeholder="t('post.titlePlaceholder')" />
         </el-form-item>
         <el-form-item :label="t('post.category')">
-          <el-radio-group v-model="postForm.category" class="post-category-radios">
-            <el-radio-button
-              v-for="item in publishCategories"
-              :key="item.value"
-              :label="item.value"
+          <div class="publish-category-block">
+            <el-radio-group v-model="publishMainCategory" class="post-category-radios">
+              <el-radio-button label="technical">技术交流</el-radio-button>
+              <el-radio-button label="trouble">故障求助</el-radio-button>
+              <el-radio-button label="experience">经验分享</el-radio-button>
+              <el-radio-button label="other">其他</el-radio-button>
+            </el-radio-group>
+            <el-radio-group
+              v-if="publishMainCategory === 'technical'"
+              v-model="postForm.category"
+              class="post-category-radios sub-category-radios"
             >
-              {{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+              <el-radio-button :label="5">保养经验</el-radio-button>
+              <el-radio-button :label="6">故障维修案例</el-radio-button>
+              <el-radio-button :label="7">备件选型</el-radio-button>
+            </el-radio-group>
+          </div>
         </el-form-item>
         <el-form-item label="工况图片">
           <ImageUploadPreview button-text="选择图片预览" @change="postImages = $event" />
@@ -174,16 +182,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { createPost } from '@/api/post'
 import { getCartCount } from '@/api/parts'
 import { ElMessage } from 'element-plus'
-import { Menu, House, ShoppingBag, Reading, ChatDotRound, User, Switch, Van, ShoppingCart, Edit, Tools } from '@element-plus/icons-vue'
+import { Menu, House, ShoppingBag, Reading, ChatDotRound, Switch, Van, ShoppingCart, Edit, Tools } from '@element-plus/icons-vue'
 import { useMobile } from '@/composables/useMobile'
 import { useI18n } from '@/i18n'
-import { postCategories } from '@/utils/format'
 import ImageUploadPreview from '@/components/ImageUploadPreview.vue'
 
 const router = useRouter()
@@ -206,43 +213,38 @@ const activeMenu = computed(() => {
   if (route.path.startsWith('/assistant')) return '/assistant'
   if (route.path.startsWith('/service')) return '/service'
   if (route.path.startsWith('/profile') || route.path.startsWith('/collections')) return '/profile'
+  if (route.path.startsWith('/community') || route.path.startsWith('/post')) return '/community'
   return route.path
 })
 
 const navItems = computed(() => [
+  { path: '/', label: t('common.home') },
   { path: '/service', label: t('common.service') },
   { path: '/parts', label: t('common.parts') },
-  { path: '/', label: t('common.community') },
+  { path: '/community', label: t('common.community') },
   { path: '/assistant', label: t('common.assistant') }
 ])
 
 const tabItems = computed(() => [
+  { path: '/', label: t('common.home'), icon: House },
   { path: '/service', label: t('common.service'), icon: Tools },
   { path: '/parts', label: t('common.parts'), icon: ShoppingBag },
-  { path: '/', label: t('common.community'), icon: House },
+  { path: '/community', label: t('common.community'), icon: Reading },
   { path: '/assistant', label: 'AI', icon: ChatDotRound },
-  { path: '/profile', label: t('common.mine'), icon: User }
 ])
 
 const showPostDialog = ref(false)
 const cartCount = ref(0)
-const postForm = ref({ title: '', content: '', category: 1 })
+const postForm = ref({ title: '', content: '', category: 5 })
 const postImages = ref([])
-const publishCategories = postCategories.filter(item => item.value > 0)
+const publishMainCategory = ref('technical')
 
 const isTabActive = (path) => {
   if (path === '/') return route.path === '/'
-  if (path === '/profile') {
-    return route.path.startsWith('/profile') || route.path.startsWith('/collections')
-  }
   return route.path.startsWith(path)
 }
 
 const goTab = (path) => {
-  if (path === '/profile' && !userStore.token) {
-    router.push('/login')
-    return
-  }
   router.push(path)
 }
 
@@ -250,6 +252,7 @@ const handleMenuSelect = (index) => router.push(index)
 const onDrawerSelect = () => { drawerOpen.value = false }
 const goAuth = (path) => { drawerOpen.value = false; router.push(path) }
 const openPostDialog = () => { drawerOpen.value = false; showPostDialog.value = true }
+const openPostDialogFromPage = () => { showPostDialog.value = true }
 
 const handleCommand = (command) => {
   drawerOpen.value = false
@@ -282,13 +285,19 @@ const handlePublishPost = async () => {
     await createPost({ ...postForm.value, content: `${postForm.value.content}${imageText}` })
     ElMessage.success(t('post.publishSuccess'))
     showPostDialog.value = false
-    postForm.value = { title: '', content: '', category: 1 }
+    postForm.value = { title: '', content: '', category: 5 }
+    publishMainCategory.value = 'technical'
     postImages.value = []
-    router.push('/')
+    router.push('/community')
   } catch (error) {
     console.error(error)
   }
 }
+
+watch(publishMainCategory, (value) => {
+  const map = { technical: 5, trouble: 2, experience: 3, other: 4 }
+  postForm.value.category = map[value] || 5
+})
 
 const loadCartCount = async () => {
   if (!userStore.token) {
@@ -304,7 +313,13 @@ const loadCartCount = async () => {
 }
 
 watch(() => userStore.token, loadCartCount)
-onMounted(loadCartCount)
+onMounted(() => {
+  loadCartCount()
+  window.addEventListener('efh-open-post-dialog', openPostDialogFromPage)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('efh-open-post-dialog', openPostDialogFromPage)
+})
 </script>
 
 <style scoped>
@@ -445,6 +460,18 @@ onMounted(loadCartCount)
 .post-category-radios {
   flex-wrap: wrap !important;
   gap: 8px;
+}
+
+.publish-category-block {
+  display: grid;
+  gap: 10px;
+}
+
+.sub-category-radios {
+  padding: 10px;
+  border: 1px solid var(--efh-border-light);
+  border-radius: 8px;
+  background: #f8fafc;
 }
 </style>
 

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,6 +46,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setViewCount(0);
         post.setLikeCount(0);
         post.setCommentCount(0);
+        post.setIsTop(0);
         post.setStatus(1);  // 直接发布
         
         boolean saved = this.save(post);
@@ -57,17 +59,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
     
     @Override
-    public IPage<Post> getPostList(Page<Post> page, Integer category) {
-        log.info("查询帖子列表: page={}, size={}, category={}", page.getCurrent(), page.getSize(), category);
+    public IPage<Post> getPostList(Page<Post> page, Integer category, String categoryGroup) {
+        log.info("查询帖子列表: page={}, size={}, category={}, categoryGroup={}", page.getCurrent(), page.getSize(), category, categoryGroup);
         
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Post::getStatus, 1);  // 只查询已发布的帖子
         
-        if (category != null && category > 0) {
+        if ("technical".equalsIgnoreCase(categoryGroup)) {
+            wrapper.in(Post::getCategory, 1, 5, 6, 7);
+        } else if (category != null && category > 0) {
             wrapper.eq(Post::getCategory, category);
         }
         
-        wrapper.orderByDesc(Post::getCreateTime);
+        wrapper.orderByDesc(Post::getIsTop)
+               .orderByDesc(Post::getTopTime)
+               .orderByDesc(Post::getCreateTime);
         
         IPage<Post> result = this.page(page, wrapper);
         log.info("查询帖子列表成功: total={}", result.getTotal());
@@ -142,6 +148,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                .eq(Post::getStatus, 1)
                .orderByDesc(Post::getCreateTime);
         return this.page(page, wrapper);
+    }
+
+    @Override
+    public void setTop(Long userId, Long postId, Boolean top) {
+        if (userId == null) {
+            throw new BusinessException("未授权");
+        }
+        Post post = this.getById(postId);
+        if (post == null || post.getStatus() == null || post.getStatus() != 1) {
+            throw new BusinessException("帖子不存在或不可操作");
+        }
+        post.setIsTop(Boolean.TRUE.equals(top) ? 1 : 0);
+        post.setTopTime(Boolean.TRUE.equals(top) ? LocalDateTime.now() : null);
+        this.updateById(post);
+        redisTemplate.delete(POST_CACHE_PREFIX + postId);
     }
     
     /**

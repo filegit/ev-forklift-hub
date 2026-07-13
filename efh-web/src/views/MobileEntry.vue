@@ -39,7 +39,7 @@
 
     <el-dialog v-model="iosDialog" title="iOS 添加到主屏幕" width="520px">
       <ol class="ios-steps">
-        <li>使用 Safari 打开：<strong>http://111.170.36.78/</strong></li>
+        <li>使用 Safari 打开：<strong>http://111.170.36.78:8888/</strong></li>
         <li>点击浏览器底部的分享按钮。</li>
         <li>选择“添加到主屏幕”。</li>
         <li>名称保持“电动叉车协同平台”，点击“添加”。</li>

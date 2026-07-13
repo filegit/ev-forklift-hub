@@ -5,6 +5,8 @@ import com.efh.common.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
+
 /**
  * 帖子实体
  */
@@ -20,5 +22,7 @@ public class Post extends BaseEntity {
     private Integer viewCount;    // 浏览量
     private Integer likeCount;    // 点赞数
     private Integer commentCount; // 评论数
+    private Integer isTop;        // 是否置顶：0-否 1-是
+    private LocalDateTime topTime; // 置顶时间
     private Integer status;       // 状态：0-待审核 1-已发布 2-已删除
 }

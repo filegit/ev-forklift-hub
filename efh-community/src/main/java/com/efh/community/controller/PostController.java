@@ -66,10 +66,11 @@ public class PostController {
     @GetMapping("/list")
     public Result<IPage<Post>> getPostList(@RequestParam(defaultValue = "1") Integer page,
                                            @RequestParam(defaultValue = "10") Integer size,
-                                           @RequestParam(required = false) Integer category) {
-        log.info("查询帖子列表: page={}, size={}, category={}", page, size, category);
+                                           @RequestParam(required = false) Integer category,
+                                           @RequestParam(required = false) String categoryGroup) {
+        log.info("查询帖子列表: page={}, size={}, category={}, categoryGroup={}", page, size, category, categoryGroup);
         
-        IPage<Post> postPage = postService.getPostList(new Page<>(page, size), category);
+        IPage<Post> postPage = postService.getPostList(new Page<>(page, size), category, categoryGroup);
         
         return Result.success(postPage);
     }
@@ -87,6 +88,21 @@ public class PostController {
         }
         IPage<Post> postPage = postService.getMyPosts(userId, new Page<>(page, size));
         return Result.success(postPage);
+    }
+
+    /**
+     * 设置或取消置顶。当前要求登录，后续可接入管理员角色校验。
+     */
+    @PostMapping("/{id}/top")
+    public Result<?> setTop(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+                            @PathVariable Long id,
+                            @RequestParam(defaultValue = "true") Boolean top) {
+        Long userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
+        if (userId == null) {
+            return Result.error(401, "未授权");
+        }
+        postService.setTop(userId, id, top);
+        return Result.success(null);
     }
     
     /**

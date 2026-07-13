@@ -116,12 +116,15 @@ CREATE TABLE IF NOT EXISTS `post_0` (
   `view_count` INT DEFAULT 0 COMMENT '浏览量',
   `like_count` INT DEFAULT 0 COMMENT '点赞数',
   `comment_count` INT DEFAULT 0 COMMENT '评论数',
+  `is_top` TINYINT DEFAULT 0 COMMENT '是否置顶：0-否，1-是',
+  `top_time` DATETIME DEFAULT NULL COMMENT '置顶时间',
   `status` TINYINT DEFAULT 1 COMMENT '状态：0-删除，1-正常',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_category` (`category`),
+  KEY `idx_top_time` (`is_top`, `top_time`),
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表_0';
 
@@ -162,12 +165,15 @@ CREATE TABLE IF NOT EXISTS `post_0` (
   `view_count` INT DEFAULT 0 COMMENT '浏览量',
   `like_count` INT DEFAULT 0 COMMENT '点赞数',
   `comment_count` INT DEFAULT 0 COMMENT '评论数',
+  `is_top` TINYINT DEFAULT 0 COMMENT '是否置顶：0-否，1-是',
+  `top_time` DATETIME DEFAULT NULL COMMENT '置顶时间',
   `status` TINYINT DEFAULT 1 COMMENT '状态：0-删除，1-正常',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_category` (`category`),
+  KEY `idx_top_time` (`is_top`, `top_time`),
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表_0';
 
